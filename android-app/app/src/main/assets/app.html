@@ -1,0 +1,1123 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ampero — 웨어러블 포텐쇼스탯 앱 목업</title>
+<style>
+/* ============ 토큰 ============ */
+:root {
+  --bg:#F2F7F7; --surface:#FFFFFF; --surface2:#EAF2F2;
+  --ink:#122B2E; --ink2:#3E5A5C; --muted:#5C7476; --hair:#D8E4E4;
+  --accent:#00939F; --accent-soft:rgba(0,147,159,.10);
+  --good:#1E9E5F; --good-soft:rgba(30,158,95,.13);
+  --warn:#C97A00; --warn-soft:rgba(201,122,0,.14);
+  --crit:#C8402F; --crit-soft:rgba(200,64,47,.14);
+  --band:rgba(0,147,159,.07); --shadow:0 18px 50px rgba(18,43,46,.16);
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg:#0B1416; --surface:#121E21; --surface2:#18272B;
+  --ink:#DDEBEA; --ink2:#A7BEBD; --muted:#8FA6A5; --hair:#24393D;
+  --accent:#00A5A0; --accent-soft:rgba(0,165,160,.14);
+  --good:#31A667; --good-soft:rgba(49,166,103,.17);
+  --warn:#D89A3A; --warn-soft:rgba(216,154,58,.17);
+  --crit:#E06A57; --crit-soft:rgba(224,106,87,.17);
+  --band:rgba(0,165,160,.09); --shadow:0 18px 50px rgba(0,0,0,.5);
+}}
+:root[data-theme="light"] {
+  --bg:#F2F7F7; --surface:#FFFFFF; --surface2:#EAF2F2;
+  --ink:#122B2E; --ink2:#3E5A5C; --muted:#5C7476; --hair:#D8E4E4;
+  --accent:#00939F; --accent-soft:rgba(0,147,159,.10);
+  --good:#1E9E5F; --good-soft:rgba(30,158,95,.13);
+  --warn:#C97A00; --warn-soft:rgba(201,122,0,.14);
+  --crit:#C8402F; --crit-soft:rgba(200,64,47,.14);
+  --band:rgba(0,147,159,.07); --shadow:0 18px 50px rgba(18,43,46,.16);
+}
+:root[data-theme="dark"] {
+  --bg:#0B1416; --surface:#121E21; --surface2:#18272B;
+  --ink:#DDEBEA; --ink2:#A7BEBD; --muted:#8FA6A5; --hair:#24393D;
+  --accent:#00A5A0; --accent-soft:rgba(0,165,160,.14);
+  --good:#31A667; --good-soft:rgba(49,166,103,.17);
+  --warn:#D89A3A; --warn-soft:rgba(216,154,58,.17);
+  --crit:#E06A57; --crit-soft:rgba(224,106,87,.17);
+  --band:rgba(0,165,160,.09); --shadow:0 18px 50px rgba(0,0,0,.5);
+}
+
+* { box-sizing:border-box; margin:0; }
+body {
+  background:var(--bg); color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR","Malgun Gothic",sans-serif;
+  line-height:1.5; -webkit-font-smoothing:antialiased;
+}
+.wrap { max-width:1060px; margin:0 auto; padding:40px 20px 80px;
+  display:flex; gap:44px; align-items:flex-start; flex-wrap:wrap; justify-content:center; }
+
+/* ============ 설계 노트 ============ */
+.notes { flex:1 1 380px; max-width:520px; min-width:320px; }
+.notes h1 { font-size:26px; letter-spacing:-.02em; text-wrap:balance; }
+.notes .sub { color:var(--muted); margin:6px 0 26px; font-size:14.5px; }
+.note-card { background:var(--surface); border:1px solid var(--hair); border-radius:14px;
+  padding:18px 20px; margin-bottom:14px; }
+.note-card h2 { font-size:13px; text-transform:uppercase; letter-spacing:.08em;
+  color:var(--accent); margin-bottom:10px; }
+.note-card table { border-collapse:collapse; width:100%; font-size:13px; }
+.note-card td { padding:5px 8px 5px 0; vertical-align:top; border-top:1px solid var(--hair); }
+.note-card tr:first-child td { border-top:none; }
+.note-card td:first-child { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px;
+  color:var(--accent); white-space:nowrap; }
+.note-card ul { padding-left:18px; font-size:13.5px; color:var(--ink2); }
+.note-card li { margin:5px 0; }
+.note-card p { font-size:13.5px; color:var(--ink2); }
+.legend { display:flex; gap:14px; font-size:12px; margin-top:4px; }
+.legend span { display:inline-flex; align-items:center; gap:5px; color:var(--ink2); }
+.legend i { width:11px; height:11px; border-radius:3px; display:inline-block; }
+
+/* ============ 폰 프레임 ============ */
+.phone { width:392px; flex:0 0 auto; background:var(--surface); border-radius:38px;
+  border:1px solid var(--hair); box-shadow:var(--shadow); overflow:hidden;
+  display:flex; flex-direction:column; height:812px; position:sticky; top:24px; }
+.p-body { flex:1; overflow-y:auto; padding:0 16px 8px; scrollbar-width:thin; }
+
+/* 앱 상단바 */
+.appbar { display:flex; align-items:center; gap:8px; padding:15px 16px 9px; }
+.brand { font-size:19px; font-weight:800; letter-spacing:-.02em; }
+.brand small { color:var(--accent); }
+.chip { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600;
+  border-radius:999px; padding:3px 9px; background:var(--surface2); color:var(--ink2); }
+.chip .dot { width:6px; height:6px; border-radius:50%; }
+.chip.ok .dot { background:var(--good); } .chip.ok { color:var(--good); background:var(--good-soft); }
+.chip.off .dot { background:var(--muted); } .chip.off { color:var(--muted); }
+.devrow { display:flex; align-items:center; gap:10px; padding:11px 12px; border-radius:11px;
+  background:var(--surface2); margin-bottom:7px; cursor:pointer; }
+.devrow b { font-size:13.5px; } .devrow .rssi { margin-left:auto; font-size:11px; color:var(--muted);
+  font-variant-numeric:tabular-nums; }
+.spacer { flex:1; }
+
+/* 기기 상태 카드 */
+.dev { display:flex; align-items:center; gap:12px; background:var(--surface2);
+  border-radius:14px; padding:8px 14px; margin-bottom:8px; }
+.dev .ic { width:32px; height:32px; border-radius:10px; background:var(--accent-soft);
+  display:flex; align-items:center; justify-content:center; color:var(--accent); flex:0 0 auto; }
+.dev .tx b { font-size:13px; }
+.dev .tx .cap { margin-top:0; font-size:10.5px; }
+.dev .ring { margin-left:auto; text-align:center; }
+.dev .ring svg { display:block; margin:0 auto; }
+.dev .ring .lab { font-size:9px; color:var(--muted); font-weight:700; white-space:nowrap; }
+
+/* 동기화 슬림 배너 */
+.sync { display:flex; align-items:center; gap:10px; margin-bottom:8px;
+  background:var(--accent-soft); border-radius:11px; padding:6px 12px;
+  font-size:11px; color:var(--accent); font-weight:600; }
+.sync .bar { flex:1; height:4px; border-radius:2px; background:var(--hair); overflow:hidden; }
+.sync .bar i { display:block; height:100%; width:68%; background:var(--accent); border-radius:2px; }
+
+/* 히어로 (값 색상 + 추세 화살표) */
+.hero { background:var(--surface2); border-radius:16px; padding:11px 16px 10px; margin-bottom:8px; }
+.hero .top { display:flex; align-items:baseline; }
+.eyebrow { font-size:10.5px; font-weight:700; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--muted); }
+.hero .meta { margin-left:auto; font-size:10.5px; color:var(--muted); font-variant-numeric:tabular-nums; }
+.hero .mid { display:flex; align-items:center; gap:10px; margin-top:1px; }
+.reading { display:flex; align-items:center; gap:7px; }
+.reading b { font-size:42px; font-weight:800; letter-spacing:-.03em; line-height:1.1;
+  font-variant-numeric:tabular-nums; }
+.reading .unit { font-size:15px; font-weight:700; color:var(--muted); align-self:flex-end;
+  margin-bottom:7px; }
+.arrow { font-size:26px; font-weight:800; line-height:1; }
+.pill { font-size:11px; font-weight:700; border-radius:999px; padding:4px 10px; margin-left:auto;
+  text-align:center; }
+.z-safe { color:var(--good); } .z-safe.bgp { background:var(--good-soft); }
+.z-high { color:var(--warn); } .z-high.bgp { background:var(--warn-soft); }
+.z-low  { color:var(--crit); } .z-low.bgp  { background:var(--crit-soft); }
+
+/* 카드 공통 */
+.card { background:var(--surface2); border-radius:14px; padding:10px 14px; margin-bottom:8px; }
+.card h3 { font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+  color:var(--muted); margin-bottom:6px; }
+.cap { font-size:11px; color:var(--muted); margin-top:2px; }
+
+/* 차트 */
+.chart-wrap { position:relative; }
+.chart-wrap svg { display:block; width:100%; height:auto; }
+.zoomable { touch-action:none; cursor:grab; }
+.zoomable.dragging { cursor:grabbing; }
+.tip { position:absolute; pointer-events:none; background:var(--ink); color:var(--bg);
+  font-size:11px; font-weight:600; border-radius:8px; padding:5px 8px; white-space:nowrap;
+  transform:translate(-50%,-125%); opacity:0; transition:opacity .1s; z-index:2;
+  font-variant-numeric:tabular-nums; }
+@media (prefers-reduced-motion: reduce) { .tip { transition:none; } }
+.selbar { display:none; align-items:center; gap:8px; margin-top:6px; padding:7px 10px;
+  background:var(--surface); border:1px solid var(--hair); border-radius:10px; font-size:12px; }
+.selbar.on { display:flex; }
+.selbar .val { font-weight:700; font-variant-numeric:tabular-nums; }
+.selbar .flag { color:var(--muted); font-size:11px; }
+.selbar .sp { flex:1; }
+.selbar button { border:0; font:inherit; font-size:11.5px; font-weight:700; border-radius:8px;
+  padding:5px 11px; cursor:pointer; }
+.selbar .del { background:var(--crit-soft); color:var(--crit); }
+.selbar .close { background:var(--surface2); color:var(--muted); }
+
+/* 그래프 툴바 */
+.gbar { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+.gbar .span { font-size:11px; font-weight:700; color:var(--ink2); font-variant-numeric:tabular-nums; }
+.gbar .hint { font-size:10px; color:var(--muted); }
+.gbar .reset { margin-left:auto; border:1px solid var(--hair); background:var(--surface);
+  color:var(--accent); font:inherit; font-size:11px; font-weight:700; border-radius:8px;
+  padding:4px 10px; cursor:pointer; }
+.gbar .reset:focus-visible { outline:2px solid var(--accent); }
+
+/* 두 시계 (오전/오후 TIR) */
+.clocks { display:flex; gap:10px; }
+.clock { flex:1; background:var(--surface2); border-radius:14px; padding:10px 6px 8px;
+  text-align:center; }
+.clock svg { display:block; margin:0 auto; }
+.clock .half { font-size:11px; font-weight:700; color:var(--muted); margin-top:3px; }
+.clock .pctlab { color:var(--ink); font-weight:800; }
+.clock .ctr .pct { font-size:15px; font-weight:800; font-variant-numeric:tabular-nums; }
+.clock .ctr .cl { font-size:8px; fill:var(--muted); font-weight:700; }
+
+/* 통계 캡션 */
+.statline { display:flex; justify-content:center; gap:14px; font-size:11.5px; color:var(--ink2);
+  font-weight:600; font-variant-numeric:tabular-nums; margin:-2px 0 8px; }
+.statline b { font-weight:800; }
+
+/* 기록: 일간/주간 토글 */
+.segt { display:flex; background:var(--surface2); border-radius:10px; padding:3px; gap:2px;
+  margin-bottom:8px; }
+.segt button { flex:1; border:0; background:transparent; color:var(--muted); font:inherit;
+  font-size:12.5px; font-weight:700; padding:7px 0; border-radius:8px; cursor:pointer; }
+.segt button[aria-pressed="true"] { background:var(--surface); color:var(--ink);
+  box-shadow:0 1px 4px rgba(0,0,0,.12); }
+.segt button:focus-visible { outline:2px solid var(--accent); }
+
+/* 기록: 일자 네비 (탭하면 스크롤 피커) */
+.datenav { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.datenav .arrow2 { width:34px; height:34px; border-radius:10px; border:1px solid var(--hair);
+  background:var(--surface2); color:var(--ink2); font-size:16px; font-weight:800; cursor:pointer; }
+.datenav .arrow2:disabled { opacity:.3; cursor:default; }
+.datenav .arrow2:focus-visible { outline:2px solid var(--accent); }
+.datenav .date { flex:1; text-align:center; font-size:14.5px; font-weight:800; cursor:pointer;
+  border-radius:10px; padding:2px; }
+.datenav .date:focus-visible { outline:2px solid var(--accent); }
+.datenav .date .cap { margin-top:-2px; }
+.srv { display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:700;
+  color:var(--accent); background:var(--accent-soft); border-radius:999px; padding:3px 9px; }
+.ev { display:flex; gap:9px; align-items:center; padding:9px 12px; border-radius:12px;
+  margin-bottom:6px; font-size:12px; font-weight:600; }
+.ev.warn { background:var(--warn-soft); color:var(--warn); }
+.ev.info { background:var(--accent-soft); color:var(--accent); }
+
+/* 설정 */
+.acct { display:flex; align-items:center; gap:13px; background:var(--surface2);
+  border-radius:16px; padding:13px 16px; margin-bottom:10px; }
+.acct .avatar { width:44px; height:44px; border-radius:50%; background:var(--accent);
+  color:#fff; display:flex; align-items:center; justify-content:center;
+  font-size:17px; font-weight:800; flex:0 0 auto; }
+.acct b { font-size:15px; }
+.acct .cap { margin-top:0; }
+.acct .badge { margin-left:auto; font-size:10.5px; font-weight:700; color:var(--good);
+  background:var(--good-soft); border-radius:999px; padding:4px 10px; white-space:nowrap; }
+.set { background:var(--surface2); border-radius:14px; margin-bottom:10px; overflow:hidden; }
+.set .head { padding:10px 16px 2px; font-size:11px; font-weight:700; letter-spacing:.05em;
+  text-transform:uppercase; color:var(--muted); }
+.set .item { display:flex; align-items:center; padding:10px 16px; gap:10px;
+  border-top:1px solid var(--hair); font-size:13.5px; }
+.set .item:nth-child(2) { border-top:none; }
+.set .item .lab { flex:1; }
+.set .val { color:var(--muted); font-weight:600; font-size:12.5px; font-variant-numeric:tabular-nums; }
+.set .chev { color:var(--muted); font-weight:800; }
+.toggle { width:42px; height:25px; border-radius:13px; background:var(--hair); border:0;
+  position:relative; cursor:pointer; transition:background .15s; flex:0 0 auto; }
+.toggle::after { content:""; position:absolute; top:3px; left:3px; width:19px; height:19px;
+  border-radius:50%; background:var(--surface); box-shadow:0 1px 3px rgba(0,0,0,.25); transition:left .15s; }
+.toggle[aria-checked="true"] { background:var(--accent); }
+.toggle[aria-checked="true"]::after { left:20px; }
+.toggle:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+@media (prefers-reduced-motion: reduce) { .toggle, .toggle::after { transition:none; } }
+.btn { display:block; width:100%; border:0; font:inherit; font-weight:700; font-size:13.5px;
+  padding:12px; border-radius:12px; cursor:pointer; margin-bottom:8px; background:var(--accent); color:#fff; }
+.btn.ghost { background:var(--surface2); color:var(--accent); }
+.btn.danger { background:transparent; color:var(--crit); }
+
+/* 바텀 시트 (QR + 날짜 피커 공용) */
+.sheet-bg { position:absolute; inset:0; background:rgba(10,20,22,.45); z-index:5;
+  display:none; align-items:flex-end; }
+.sheet-bg.on { display:flex; }
+.sheet { background:var(--surface); border-radius:22px 22px 0 0; width:100%; padding:18px 20px 24px; }
+.sheet h4 { font-size:15px; margin-bottom:4px; }
+.sheet .cap { margin-bottom:12px; }
+.qrbox { position:relative; height:130px; border-radius:14px; background:var(--surface2);
+  display:flex; align-items:center; justify-content:center; margin-bottom:12px;
+  border:1.5px dashed var(--hair); color:var(--muted); overflow:hidden; }
+.qrbox .frame { position:absolute; inset:22px 96px; border:2px solid var(--accent);
+  border-radius:10px; opacity:.85; }
+.qres { display:none; background:var(--good-soft); color:var(--good); border-radius:12px;
+  padding:10px 14px; font-size:12.5px; font-weight:700; margin-bottom:12px; }
+.qres.on { display:block; }
+.qres .cap { color:var(--good); opacity:.8; font-weight:600; }
+.sheet .row2 { display:flex; gap:10px; }
+.sheet .row2 .btn { flex:1; margin-bottom:0; }
+/* 스크롤 휠 날짜 피커 */
+.wheels { display:flex; gap:10px; justify-content:center; margin-bottom:14px; position:relative; }
+.wheels::before { content:""; position:absolute; left:0; right:0; top:50%; height:38px;
+  transform:translateY(-50%); background:var(--surface2); border-radius:10px; z-index:0; }
+.wheel { height:152px; overflow-y:auto; scroll-snap-type:y mandatory; scrollbar-width:none;
+  text-align:center; position:relative; z-index:1; flex:0 0 auto; }
+.wheel::-webkit-scrollbar { display:none; }
+.wheel .pad { height:57px; }
+.wheel .opt { height:38px; line-height:38px; font-size:16px; font-weight:700; color:var(--muted);
+  scroll-snap-align:center; font-variant-numeric:tabular-nums; }
+.wheel .opt.sel { color:var(--ink); font-weight:800; }
+.wheel.mon { width:96px; } .wheel.day { width:72px; }
+
+/* 하단 탭바 */
+.tabbar { display:flex; border-top:1px solid var(--hair); background:var(--surface);
+  padding:7px 6px calc(7px + env(safe-area-inset-bottom)); }
+.tabbar button { flex:1; border:0; background:none; color:var(--muted); font:inherit;
+  font-size:10.5px; font-weight:700; cursor:pointer; display:flex; flex-direction:column;
+  align-items:center; gap:3px; padding:5px 0; border-radius:10px; }
+.tabbar button svg { display:block; }
+.tabbar button[aria-selected="true"] { color:var(--accent); }
+.tabbar button:focus-visible { outline:2px solid var(--accent); }
+.screen { display:none; } .screen.on { display:block; }
+
+@media (max-width:860px){ .phone { position:static; } }
+</style>
+
+<div class="wrap">
+
+<!-- ==================== 폰 목업 ==================== -->
+<div class="phone" role="region" aria-label="앱 목업">
+  <div class="appbar">
+    <div class="brand">Ampero<small>.</small></div>
+    <span class="chip ok"><span class="dot"></span>pstat 연결됨</span>
+    <div class="spacer"></div>
+  </div>
+
+  <div class="p-body">
+
+    <!-- ===== 홈 ===== -->
+    <section class="screen on" id="scr-home">
+      <div class="dev">
+        <div class="ic">
+          <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <rect x="4" y="2.5" width="12" height="15" rx="3" stroke="currentColor" stroke-width="1.7"/>
+            <path d="M8 17.5 V19 M12 17.5 V19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+            <path d="M7.5 10 h2 l1.2-3 1.6 6 1.2-3 h1" stroke="currentColor" stroke-width="1.5"
+              fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="tx"><b>pstat</b>
+          <div class="cap">연결됨 · 패드 밖 · 전극 1일차</div></div>
+        <div class="ring" title="측정기 배터리 (폰 아님)">
+          <svg width="36" height="36" viewBox="0 0 44 44" aria-label="기기 배터리 82%">
+            <circle cx="22" cy="22" r="17" fill="none" stroke="var(--hair)" stroke-width="4.5"/>
+            <circle cx="22" cy="22" r="17" fill="none" stroke="var(--good)" stroke-width="4.5"
+              stroke-linecap="round" stroke-dasharray="87.6 106.8" transform="rotate(-90 22 22)"/>
+            <text x="22" y="26" text-anchor="middle" font-size="11" font-weight="800"
+              fill="var(--ink)" font-family="inherit">82</text>
+          </svg>
+          <div class="lab">기기 배터리</div>
+        </div>
+      </div>
+
+      <div class="sync">동기화 214개 · 68%<div class="bar"><i></i></div></div>
+
+      <div class="hero">
+        <div class="top">
+          <span class="eyebrow">현재 전류</span>
+          <span class="meta">3분 전 · G1 · 요약 모드</span>
+        </div>
+        <div class="mid">
+          <div class="reading">
+            <b id="nowVal">142.3</b><span class="unit">nA</span>
+            <span class="arrow" id="nowArrow">→</span>
+          </div>
+          <span class="pill bgp" id="nowPill">범위 내</span>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:6px">
+        <div class="gbar">
+          <span class="span" id="gspan">최근 12시간</span>
+          <span class="hint">끌기·핀치·점탭</span>
+          <button class="reset" id="greset">초기화</button>
+        </div>
+        <div class="chart-wrap" id="bigchart"></div>
+        <div class="selbar" id="selHome"></div>
+      </div>
+      <div class="statline">
+        <span>평균 <b id="stAvg">158</b></span><span>최저 <b id="stMin">121</b></span>
+        <span>최고 <b id="stMax">213</b></span>
+      </div>
+
+      <div class="clocks">
+        <div class="clock"><div id="clockAM"></div>
+          <div class="half">오전 · <span id="amPct" class="pctlab"></span></div></div>
+        <div class="clock"><div id="clockPM"></div>
+          <div class="half">오후 · <span id="pmPct" class="pctlab"></span></div></div>
+      </div>
+    </section>
+
+    <!-- ===== 기록 ===== -->
+    <section class="screen" id="scr-log">
+      <div class="segt" role="tablist" aria-label="보기">
+        <button aria-pressed="true"  data-view="day">일간</button>
+        <button aria-pressed="false" data-view="week">주간 패턴</button>
+      </div>
+
+      <div id="viewDay">
+        <div class="datenav">
+          <button class="arrow2" id="dPrev" aria-label="이전 날">‹</button>
+          <div class="date" id="dOpen" role="button" tabindex="0"><span id="dLabel">2026년 7월 12일 (일)</span>
+            <div class="cap" id="dSub">서버에서 불러옴 · 288개 측정</div></div>
+          <button class="arrow2" id="dNext" aria-label="다음 날">›</button>
+        </div>
+        <div class="card">
+          <div class="gbar" style="margin-bottom:4px">
+            <span class="span" id="dSpan">하루 전체</span>
+            <span class="srv">☁ 서버</span>
+            <button class="reset" id="dReset">초기화</button>
+          </div>
+          <div class="chart-wrap" id="daychart"></div>
+          <div class="selbar" id="selDay"></div>
+          <div class="cap" style="margin-top:4px">끌기·핀치·점탭 · ◆ 변곡점 · 점 탭 후 삭제 가능</div>
+        </div>
+        <div class="statline" style="margin-bottom:8px">
+          <span>평균 <b id="dAvg">—</b></span><span>최저 <b id="dMin">—</b></span>
+          <span>최고 <b id="dMax">—</b></span><span>범위 내 <b id="dIn">—</b></span>
+        </div>
+        <div id="dEvents"></div>
+      </div>
+
+      <div id="viewWeek" style="display:none">
+        <div class="card">
+          <div class="gbar" style="margin-bottom:4px">
+            <span class="span">최근 7일 겹쳐보기 (하루 24시간)</span>
+            <span class="srv">☁ 서버</span>
+          </div>
+          <div class="chart-wrap" id="weekchart"></div>
+          <div class="cap" style="margin-top:4px">굵은 선 = 중앙값 · 음영 = 10–90% 범위 ·
+            매일 반복되는 패턴 확인용</div>
+        </div>
+        <div class="statline" style="margin-bottom:8px">
+          <span>7일 평균 <b id="wAvg">—</b></span><span>평균 범위 내 <b id="wIn">—</b></span>
+        </div>
+        <div class="ev info">오후 2–4시에 반복적으로 값이 낮아지는 경향이 보입니다.</div>
+      </div>
+    </section>
+
+    <!-- ===== 설정 ===== -->
+    <section class="screen" id="scr-set">
+      <div class="acct">
+        <div class="avatar">주</div>
+        <div><b>주현</b><div class="cap">juhyun4280@gmail.com</div></div>
+        <span class="badge">Google 로그인</span>
+      </div>
+
+      <div class="set">
+        <div class="head">목표 범위</div>
+        <div class="item"><div class="lab">안전 구간</div><div class="val">80 – 240 nA</div></div>
+        <div class="item"><div class="lab">저전류 경계 (빨강)</div><div class="val">&lt; 80 nA</div></div>
+        <div class="item"><div class="lab">고전류 경계 (주황)</div><div class="val">&gt; 240 nA</div></div>
+      </div>
+
+      <div class="set">
+        <div class="head">알림</div>
+        <div class="item"><div class="lab">저전류 경보<div class="cap">80 nA 미만 지속 시</div></div>
+          <button class="toggle" role="switch" aria-checked="true" aria-label="저전류 경보"></button></div>
+        <div class="item"><div class="lab">고전류 경보</div>
+          <button class="toggle" role="switch" aria-checked="true" aria-label="고전류 경보"></button></div>
+        <div class="item"><div class="lab">급변 알림<div class="cap">10분 내 급상승·급강하</div></div>
+          <button class="toggle" role="switch" aria-checked="false" aria-label="급변 알림"></button></div>
+        <div class="item"><div class="lab">기기 배터리 부족</div>
+          <button class="toggle" role="switch" aria-checked="true" aria-label="배터리 알림"></button></div>
+      </div>
+
+      <div class="set">
+        <div class="head">데이터</div>
+        <div class="item"><div class="lab">서버 자동 업로드</div>
+          <button class="toggle" role="switch" aria-checked="true" aria-label="자동 업로드"></button></div>
+        <div class="item"><div class="lab">마지막 업로드</div><div class="val">5분 전 · 214개</div></div>
+      </div>
+
+      <div class="set">
+        <div class="head">전극</div>
+        <div class="item"><div class="lab">현재 전극
+          <div class="cap" id="elecNow">E-2406-087 · 로트 L19 · 1일 경과</div></div></div>
+      </div>
+      <button class="btn" id="qrBtn">전극 QR 스캔 — 교체 자동 등록</button>
+
+      <div class="set">
+        <div class="item" style="border-top:none"><div class="lab">측정 상세 설정
+          <div class="cap">모드 · 레이트 · 요약 · 캘리브레이션 · 기기 정보</div></div>
+          <span class="chev">›</span></div>
+      </div>
+      <button class="btn danger">로그아웃</button>
+    </section>
+  </div>
+
+  <!-- QR 스캔 시트 -->
+  <div class="sheet-bg" id="sheetBg">
+    <div class="sheet" role="dialog" aria-label="전극 QR 스캔">
+      <h4>전극 QR 스캔</h4>
+      <div class="cap">새 전극의 QR 코드를 프레임에 맞춰주세요. ID·로트·유효기한이 자동 등록됩니다.</div>
+      <div class="qrbox"><span id="qrMsg">카메라 미리보기 (목업)</span><div class="frame"></div></div>
+      <div class="qres" id="qrRes">✓ 전극 인식: <b>E-2407-113</b> · 로트 L23 · 유효기한 2027-01
+        <div class="cap">등록하면 교체 마커가 기록되고 제로 보정 안내가 이어집니다.</div></div>
+      <div class="row2">
+        <button class="btn ghost" id="qrCancel">취소</button>
+        <button class="btn" id="qrOk" disabled style="opacity:.5">등록</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 날짜 스크롤 피커 -->
+  <div class="sheet-bg" id="dateBg">
+    <div class="sheet" role="dialog" aria-label="날짜 선택">
+      <h4>날짜 선택</h4>
+      <div class="cap">월·일을 위아래로 굴려서 맞춘 뒤 이동을 누르세요.</div>
+      <div class="wheels">
+        <div class="wheel mon" id="wMon"></div>
+        <div class="wheel day" id="wDay"></div>
+      </div>
+      <div class="row2">
+        <button class="btn ghost" id="dateCancel">취소</button>
+        <button class="btn" id="dateGo">이동</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 기기 연결 오버레이 (네이티브 모드에서 미연결 시) -->
+  <div class="sheet-bg" id="connBg" style="align-items:center">
+    <div class="sheet" style="border-radius:22px; margin:0 16px; width:auto">
+      <h4>측정기 연결</h4>
+      <div class="cap" id="connMsg">주변의 pstat 기기를 검색합니다…</div>
+      <div id="devList" style="max-height:240px; overflow-y:auto; margin-bottom:12px"></div>
+      <div class="row2"><button class="btn" id="rescan">다시 검색</button></div>
+    </div>
+  </div>
+
+  <!-- 탭바 -->
+  <nav class="tabbar" role="tablist" aria-label="화면">
+    <button role="tab" aria-selected="true" data-scr="scr-home">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M3.5 9.5 L11 3 L18.5 9.5 V18 a1 1 0 0 1 -1 1 H4.5 a1 1 0 0 1 -1 -1 Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>홈</button>
+    <button role="tab" aria-selected="false" data-scr="scr-log">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><rect x="3" y="4.5" width="16" height="14.5" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 9 H19 M7 2.5 V6 M15 2.5 V6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>기록</button>
+    <button role="tab" aria-selected="false" data-scr="scr-set">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><circle cx="11" cy="8" r="3.5" stroke="currentColor" stroke-width="1.8"/><path d="M4 19 c0-3.6 3.1-5.8 7-5.8 s7 2.2 7 5.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>계정</button>
+  </nav>
+</div>
+
+<!-- ==================== 설계 노트 ==================== -->
+<div class="notes">
+  <h1>Ampero — 웨어러블 포텐쇼스탯 전용 앱 <span style="color:var(--accent)">목업 v1.1</span></h1>
+  <p class="sub">CGM 문법으로 직관성을 끌어올린 라운드. 값·그래프를 구간 색으로 말하고,
+  추세 화살표·오전/오후 TIR 시계·주간 패턴·튀는 값 삭제까지. 표기는 전류(nA).</p>
+  <div class="legend">
+    <span><i style="background:var(--crit)"></i>저전류 &lt;80</span>
+    <span><i style="background:var(--good)"></i>안전 80–240</span>
+    <span><i style="background:var(--warn)"></i>고전류 &gt;240</span>
+  </div>
+
+  <div class="note-card">
+    <h2>v0.9 변경 (요청 8건)</h2>
+    <ul>
+      <li><b>구간 색상</b>: 안전=초록·저전류=빨강·고전류=주황. 그래프 배경 3존 음영 +
+        곡선 구간별 색 + 현재값·화살표 색</li>
+      <li><b>추세 화살표</b>: 위/평형/아래 3단계 (최근 30분 기울기), 숫자 옆</li>
+      <li><b>오전·오후 시계</b> 2개: <b>꽉 찬 파이</b>(구간색), 미래 시간대는 빈 파이(테두리만).
+        빨강·주황 특이점엔 <b>탭 마커(!)</b> → 누르면 홈 그래프가 그 시간대로 점프.
+        정상 비율 %는 파이 아래 라벨로 이동</li>
+      <li>홈 위젯: 플랫폼 API 필요 — <b>메모만</b> (아래 백로그)</li>
+      <li><b>기록 일간</b>: 날짜를 탭하면 <b>월·일 스크롤 휠</b>로 이동. <b>주간 패턴</b> 탭
+        = 7일 겹쳐 중앙값+10–90% 밴드(AGP)로 반복 패턴 확인</li>
+      <li><b>알림</b>: 설정에서 켜고 끄는 토글만 (동작은 앱 빌드 시)</li>
+      <li><b>튀는 값 삭제</b>: 점을 탭하면 하단 바에 값+삭제 버튼 → 곡선·통계에서 제외</li>
+    </ul>
+  </div>
+
+  <div class="note-card">
+    <h2>백로그 (나중)</h2>
+    <ul>
+      <li>홈 위젯 / 워치 컴플리케이션 (현재값+화살표 글랜스)</li>
+      <li>임계 알림 실제 푸시 (백그라운드 동작 실기 테스트)</li>
+      <li>삭제한 값 서버 동기화(soft-delete) · 되돌리기</li>
+    </ul>
+  </div>
+
+  <div class="note-card">
+    <h2>펌웨어 ↔ UI 매핑</h2>
+    <table>
+      <tr><td>d[[…]]</td><td>현재값·그래프·시계·주간패턴 (agg=사이클당 1점)</td></tr>
+      <tr><td>기울기</td><td>추세 화살표 (nA/분 → 위/평형/아래)</td></tr>
+      <tr><td>vbat / qi+chg</td><td>기기 카드 배터리 링·연결/충전 상태</td></tr>
+      <tr><td>fpend / gap</td><td>동기화 배너 · 기록 유실 이벤트</td></tr>
+      <tr><td>(앱 로컬)</td><td>목표 범위·삭제 표식·전극 QR·알림 설정</td></tr>
+    </table>
+  </div>
+</div>
+</div>
+
+<script>
+/* ============ 데모 데이터 ============ */
+function rng(seed){ return function(){ seed=(seed*1103515245+12345)&0x7fffffff; return seed/0x7fffffff; }; }
+const R = rng(42);
+let N = 2016;                        // 7일 × 288 (데모). 라이브 모드에선 수신마다 증가
+const data = [];
+let base = 160;                      // 평균회귀 랜덤워크
+for (let i=0;i<N;i++){
+  base += (R()-0.5)*10 + (160-base)*0.025;    // 160 으로 되돌아옴
+  const tod=i%288;                            // 하루 내 위치 (0..287)
+  const daily=Math.sin(tod/288*Math.PI*2 - 1.2)*82;   // 일주기 (밤 낮음/낮 높음)
+  const dip=(tod>=168&&tod<204)?-42:0;        // 오후 2–4시 반복 하락 (비누적)
+  let v = base + daily + dip + (R()-0.5)*8;
+  if (i===N-1) v = 142.3;                      // 현재값 고정
+  data.push({ t:i*5, v:Math.max(55,v), g: v>180?2:1 });
+}
+/* 튀는 값 데모: 어제 낮에 스파이크 하나 */
+data[N-1-30*12].v = 291;
+
+const BAND_LO=80, BAND_HI=240;
+const NOW=Date.now();
+const deleted=new Set();
+function alive(i){ return !deleted.has(i); }
+function ptDate(p){ return new Date(NOW - ((N-1)*5 - p.t)*60000); }
+function fmtHM(d){ return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
+function fmtMDHM(d){ return `${d.getMonth()+1}/${d.getDate()} ${fmtHM(d)}`; }
+function zoneOf(v){ return v<BAND_LO?'low':v>BAND_HI?'high':'safe'; }
+const ZCOL={low:'var(--crit)',safe:'var(--good)',high:'var(--warn)'};
+const ZLAB={low:'낮음',safe:'범위 내',high:'높음'};
+
+const EVENTS=[
+  {i:N-1-26*12,  id:'E-2406-087'},
+  {i:N-1-120*12, id:'E-2406-051'},
+];
+
+/* 현재값 색/추세 */
+(function(){
+  const v=data[N-1].v, z=zoneOf(v);
+  const el=document.getElementById('nowVal'); el.textContent=v.toFixed(1);
+  el.className=''; el.classList.add('z-'+z);
+  const pill=document.getElementById('nowPill');
+  pill.textContent=ZLAB[z]; pill.className='pill bgp z-'+z;
+  /* 추세: 최근 30분(6샘플) */
+  let a=null; for(let k=N-7;k<N;k++){ if(alive(k)){ a=data[k].v; break; } }
+  const slope=a==null?0:v-a;
+  const ar=document.getElementById('nowArrow');
+  ar.className='arrow z-'+z;
+  ar.textContent = slope>8?'↑' : slope<-8?'↓' : '→';
+})();
+
+/* ============ 변곡점 검출 ============ */
+function findTurns(i0,i1,minProm){
+  const idxs=[]; for(let i=i0;i<=i1;i++) if(alive(i)) idxs.push(i);
+  const n=idxs.length; if(n<12) return [];
+  const sm=new Array(n);
+  for(let k=0;k<n;k++){ let s=0,c=0; for(let j=-4;j<=4;j++){const m=k+j; if(m>=0&&m<n){s+=data[idxs[m]].v;c++;}} sm[k]=s/c; }
+  const out=[]; let dir=0, extI=0;
+  for(let k=1;k<n;k++){
+    if(dir===0){ if(Math.abs(sm[k]-sm[extI])>=minProm){ dir=sm[k]>sm[extI]?1:-1; extI=k; } continue; }
+    if(dir>0){ if(sm[k]>=sm[extI]) extI=k; else if(sm[extI]-sm[k]>=minProm){ out.push({i:idxs[extI],v:sm[extI],peak:true}); dir=-1; extI=k; } }
+    else { if(sm[k]<=sm[extI]) extI=k; else if(sm[k]-sm[extI]>=minProm){ out.push({i:idxs[extI],v:sm[extI],peak:false}); dir=1; extI=k; } }
+  }
+  return out;
+}
+
+/* ============ 공용 줌 차트 ============ */
+function zoomChart(cfg){
+  const S={ el:cfg.el, sel:cfg.sel||null, W:352, H:cfg.h||190, P:{l:34,r:12,t:12,b:20},
+            MIN_SPAN:12, selI:-1, turns:[] };
+  S.el.classList.add('zoomable');
+  [S.a,S.b]=cfg.def();
+
+  function clamp(){
+    const [lo,hi]=cfg.lim(); const span=S.b-S.a;
+    if(span<S.MIN_SPAN){ const c=(S.a+S.b)/2; S.a=c-S.MIN_SPAN/2; S.b=c+S.MIN_SPAN/2; }
+    if(S.b-S.a>hi-lo){ S.a=lo; S.b=hi; }
+    if(S.a<lo){ S.b+=lo-S.a; S.a=lo; }
+    if(S.b>hi){ S.a-=S.b-hi; S.b=hi; if(S.a<lo)S.a=lo; }
+  }
+  function render(){
+    clamp();
+    const {W,H,P}=S;
+    const i0=Math.max(0,Math.floor(S.a)), i1=Math.min(N-1,Math.ceil(S.b));
+    const av=[]; for(let i=i0;i<=i1;i++) if(alive(i)) av.push(i);
+    const vs=av.map(i=>data[i].v);
+    const lo=Math.min(BAND_LO-15,Math.min(...vs)-8), hi=Math.max(BAND_HI+15,Math.max(...vs)+8);
+    const X=idx=>P.l+(W-P.l-P.r)*(idx-S.a)/(S.b-S.a);
+    const Y=v=>P.t+(H-P.t-P.b)*(1-(v-lo)/(hi-lo));
+    S.X=X; S.Y=Y; S.i0=i0; S.i1=i1;
+    const cX=P.l, cW=W-P.l-P.r;
+
+    /* 3존 배경 */
+    const yLoTop=Y(BAND_HI), yLoBot=Y(BAND_LO), yBot=H-P.b, yTop=P.t;
+    let zones=`<rect x="${cX}" y="${yTop}" width="${cW}" height="${Math.max(0,yLoTop-yTop)}" fill="var(--warn-soft)"/>
+      <rect x="${cX}" y="${yLoTop}" width="${cW}" height="${Math.max(0,yLoBot-yLoTop)}" fill="var(--good-soft)"/>
+      <rect x="${cX}" y="${yLoBot}" width="${cW}" height="${Math.max(0,yBot-yLoBot)}" fill="var(--crit-soft)"/>`;
+
+    /* 그리드 */
+    let grid='',lbl='';
+    const step=(hi-lo)>220?100:50;
+    for(let gv=Math.ceil(lo/step)*step; gv<hi; gv+=step){
+      grid+=`<line x1="${P.l}" x2="${W-P.r}" y1="${Y(gv)}" y2="${Y(gv)}" stroke="var(--hair)" stroke-width="1"/>`;
+      lbl+=`<text x="${P.l-6}" y="${Y(gv)+3.5}" text-anchor="end" font-size="9.5" fill="var(--muted)" font-family="inherit">${gv}</text>`;
+    }
+    /* x축 눈금 */
+    const spanMin=(S.b-S.a)*5, LADDER=[30,60,180,360,720,1440,2880];
+    let ivl=LADDER[LADDER.length-1]; for(const L of LADDER){ if(spanMin/L<=6){ ivl=L; break; } }
+    const timeOf=idx=>NOW-((N-1)-idx)*300000, Ta=timeOf(S.a), Tb=timeOf(S.b);
+    const da=new Date(Ta), mid=new Date(da.getFullYear(),da.getMonth(),da.getDate()).getTime();
+    let tick=mid+Math.ceil((Ta-mid)/60000/ivl)*ivl*60000, xt='';
+    for(; tick<=Tb; tick+=ivl*60000){
+      const x=X((N-1)-(NOW-tick)/300000); if(x<P.l+16||x>W-P.r-16) continue;
+      const td=new Date(tick), txt=ivl>=1440?`${td.getMonth()+1}/${td.getDate()}`:fmtHM(td);
+      xt+=`<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${P.t}" y2="${H-P.b}" stroke="var(--hair)" stroke-width="1"/>
+        <text x="${x.toFixed(1)}" y="${H-6}" text-anchor="middle" font-size="9.5" fill="var(--muted)" font-family="inherit">${txt}</text>`;
+    }
+    /* 전극 마커 */
+    let evm='';
+    for(const ev of EVENTS){ if(ev.i<S.a||ev.i>S.b) continue; const x=X(ev.i);
+      evm+=`<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${P.t+11}" y2="${H-P.b}" stroke="var(--ink2)" stroke-width="1.4" stroke-dasharray="5 3" opacity="0.55"/>
+        <rect x="${(x-26).toFixed(1)}" y="${P.t-2}" width="52" height="13" rx="6.5" fill="var(--surface)"/>
+        <text x="${x.toFixed(1)}" y="${P.t+8}" text-anchor="middle" font-size="8.5" font-weight="700" fill="var(--ink2)" font-family="inherit">전극 교체</text>`;
+    }
+    /* 구간색 선분 */
+    let segs='';
+    for(let k=1;k<av.length;k++){
+      const p0=data[av[k-1]], p1=data[av[k]];
+      const z=zoneOf((p0.v+p1.v)/2);
+      segs+=`<line x1="${X(av[k-1]).toFixed(1)}" y1="${Y(p0.v).toFixed(1)}" x2="${X(av[k]).toFixed(1)}" y2="${Y(p1.v).toFixed(1)}" stroke="${ZCOL[z]}" stroke-width="2" stroke-linecap="round"/>`;
+    }
+    /* 점 (≤64) */
+    let dots='';
+    if(av.length<=64) for(const i of av)
+      dots+=`<circle cx="${X(i).toFixed(1)}" cy="${Y(data[i].v).toFixed(1)}" r="2.6" fill="${ZCOL[zoneOf(data[i].v)]}" stroke="var(--surface2)" stroke-width="1.3"/>`;
+    /* 변곡점 */
+    let tn='';
+    if(S.turns.length){
+      const vis=S.turns.filter(t=>t.i>=S.a&&t.i<=S.b&&alive(t.i));
+      const maxN=Math.floor((W-P.l-P.r)/34);
+      const show=vis.length<=maxN?vis:vis.filter((_,k)=>k%Math.ceil(vis.length/maxN)===0);
+      for(const t of show){ const x=X(t.i), y=Y(t.v);
+        tn+=`<rect x="${(x-3.2).toFixed(1)}" y="${(y-3.2).toFixed(1)}" width="6.4" height="6.4" transform="rotate(45 ${x.toFixed(1)} ${y.toFixed(1)})" fill="var(--ink2)" stroke="var(--surface2)" stroke-width="1.2"/>
+          <text x="${x.toFixed(1)}" y="${(t.peak?y-9:y+15).toFixed(1)}" text-anchor="middle" font-size="9.5" font-weight="800" fill="var(--ink2)" font-family="inherit">${Math.round(t.v)}</text>`;
+      }
+    }
+    /* 선택점 */
+    let selDot='';
+    if(S.selI>=i0&&S.selI<=i1&&alive(S.selI)){ const x=X(S.selI), y=Y(data[S.selI].v);
+      selDot=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5.5" fill="${ZCOL[zoneOf(data[S.selI].v)]}" stroke="var(--surface)" stroke-width="2.5"/>
+        <line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${P.t}" y2="${H-P.b}" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 3"/>`;
+    }
+    S.el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="전류 그래프">
+      ${zones}${grid}${lbl}${xt}${evm}${segs}${dots}${tn}${selDot}
+    </svg><div class="tip" role="status"></div>`;
+    const tip=S.el.querySelector('.tip');
+    if(S.selI>=i0&&S.selI<=i1&&alive(S.selI)){ const p=data[S.selI];
+      tip.textContent=`${fmtMDHM(ptDate(p))} · ${p.v.toFixed(1)} nA`;
+      tip.style.left=(X(S.selI)/W*100)+'%'; tip.style.top=(Y(p.v)/H*100)+'%'; tip.style.opacity=1;
+    }
+    if(cfg.onRender) cfg.onRender(S,vs);
+    if(S.sel) renderSel();
+  }
+  /* 선택/삭제 바 */
+  function renderSel(){
+    if(S.selI<0||!alive(S.selI)){ S.sel.classList.remove('on'); return; }
+    const p=data[S.selI], z=zoneOf(p.v);
+    S.sel.classList.add('on');
+    S.sel.innerHTML=`<span class="val z-${z}">${p.v.toFixed(1)} nA</span>
+      <span class="flag">${fmtMDHM(ptDate(p))} · ${ZLAB[z]}</span><span class="sp"></span>
+      <button class="del">삭제</button><button class="close">닫기</button>`;
+    S.sel.querySelector('.del').onclick=()=>{ deleted.add(S.selI); S.selI=-1; if(cfg.afterEdit)cfg.afterEdit(); render(); };
+    S.sel.querySelector('.close').onclick=()=>{ S.selI=-1; render(); };
+  }
+  /* 제스처 */
+  (function(){
+    const box=S.el; const ptrs=new Map(); let start=null;
+    const pxToIdx=(cx,a,b)=>{ const r=box.getBoundingClientRect();
+      return a+((cx-r.left)/r.width*S.W-S.P.l)/((S.W-S.P.l-S.P.r)/(b-a)); };
+    box.addEventListener('pointerdown',e=>{
+      box.setPointerCapture(e.pointerId); ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+      if(ptrs.size===1) start={x:e.clientX,a:S.a,b:S.b,moved:false,t:Date.now()};
+      else if(ptrs.size===2){ const [p1,p2]=[...ptrs.values()];
+        start={dist:Math.max(20,Math.abs(p1.x-p2.x)),a:S.a,b:S.b,cx:(p1.x+p2.x)/2,moved:true}; }
+      box.classList.add('dragging');
+    });
+    box.addEventListener('pointermove',e=>{
+      if(!ptrs.has(e.pointerId))return; ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY}); if(!start)return;
+      const r=box.getBoundingClientRect(), idxPerPx=(start.b-start.a)/(r.width*(S.W-S.P.l-S.P.r)/S.W);
+      if(ptrs.size===1){ const dx=e.clientX-start.x; if(Math.abs(dx)>5)start.moved=true;
+        if(start.moved){ S.a=start.a-dx*idxPerPx; S.b=start.b-dx*idxPerPx; render(); } }
+      else if(ptrs.size===2){ const [p1,p2]=[...ptrs.values()], nd=Math.max(20,Math.abs(p1.x-p2.x));
+        const scale=start.dist/nd, cIdx=pxToIdx(start.cx,start.a,start.b);
+        S.a=cIdx-(cIdx-start.a)*scale; S.b=cIdx+(start.b-cIdx)*scale; render(); }
+    });
+    function up(e){
+      if(start&&ptrs.size===1&&!start.moved&&(Date.now()-start.t)<500){
+        const r=box.getBoundingClientRect(), sx=(e.clientX-r.left)/r.width*S.W, sy=(e.clientY-r.top)/r.height*S.H;
+        let best=-1,bd=22;
+        for(let i=S.i0;i<=S.i1;i++){ if(!alive(i))continue; const d=Math.hypot(S.X(i)-sx,S.Y(data[i].v)-sy); if(d<bd){bd=d;best=i;} }
+        S.selI=(best===S.selI)?-1:best; render();
+      }
+      ptrs.delete(e.pointerId);
+      if(ptrs.size===0){ start=null; box.classList.remove('dragging'); }
+      else if(ptrs.size===1){ const p=[...ptrs.values()][0]; start={x:p.x,a:S.a,b:S.b,moved:true,t:Date.now()}; }
+    }
+    box.addEventListener('pointerup',up); box.addEventListener('pointercancel',up);
+    box.addEventListener('wheel',e=>{ e.preventDefault(); const cIdx=pxToIdx(e.clientX,S.a,S.b);
+      const scale=e.deltaY>0?1.18:0.85; S.a=cIdx-(cIdx-S.a)*scale; S.b=cIdx+(S.b-cIdx)*scale; render();
+    },{passive:false});
+  })();
+  S.render=render;
+  S.reset=()=>{ [S.a,S.b]=cfg.def(); S.selI=-1; render(); };
+  render();
+  return S;
+}
+
+const spanText=S=>{ const h=(S.b-S.a)*5/60;
+  return h>=48?`${(h/24).toFixed(1)}일 표시`:h>=1?`${h.toFixed(1)}시간 표시`:`${Math.round(h*60)}분 표시`; };
+
+/* ============ 오전/오후 시계 (연속 도넛) ============ */
+/* half=0(오전 0–12) / 12(오후 12–24). 5분 슬롯을 이어붙인 연속 링:
+ *  안전=초록 / 저=빨강 / 고=주황 / 미래(데이터 없음)=흰 실선.
+ *  빨강·주황 구간을 탭하면 홈 그래프가 그 시간대로 점프. */
+/* 데모: 시계는 '오늘'을 나타내되, 결정적 시연을 위해 색 변화가 뚜렷한
+ * 기준일(7/12)을 쓰고 현재시각을 20:00 으로 고정 → 20시 이후는 미래(흰선). */
+const CLOCK_NOW_H=20;
+function drawClock(el, half){
+  const cx=44,cy=44,R=38, R2=Math.PI*2;
+  const day=DAYS[DAYS.length-2];             // 기준일
+  const dayBase=day.d.getTime();
+  const SL=144;                              // 12시간 × 12슬롯(5분)
+  const zonesArr=new Array(SL).fill(null);   // 'safe'|'low'|'high'|null(미래)
+  for(let i=day.i0;i<=day.i1;i++){ if(!alive(i))continue; const d=ptDate(data[i]);
+    const hr=d.getHours()+d.getMinutes()/60;
+    if(hr>=CLOCK_NOW_H) continue;            // 미래(빈 파이)로 남김
+    const off=(d.getTime()-dayBase)-half*3600000;
+    if(off<0||off>=12*3600000) continue;
+    zonesArr[Math.floor(off/300000)]=zoneOf(data[i].v);
+  }
+  const base=dayBase;
+
+  const A=k=>-Math.PI/2 + (k/SL)*R2;          // 12시 위, 시계방향
+  function slice(k0,k1,fill){
+    const a0=A(k0), a1=A(k1);
+    const x0=cx+R*Math.cos(a0), y0=cy+R*Math.sin(a0);
+    const x1=cx+R*Math.cos(a1), y1=cy+R*Math.sin(a1);
+    const large=(a1-a0)>Math.PI?1:0;
+    return `<path d="M${cx} ${cy} L${x0.toFixed(2)} ${y0.toFixed(2)}
+      A${R} ${R} 0 ${large} 1 ${x1.toFixed(2)} ${y1.toFixed(2)} Z" fill="${fill}"/>`;
+  }
+  /* 같은 색 구간 병합 → 파이 슬라이스 (미래는 채우지 않음 = 빈 파이) */
+  let pies='', marks=''; let k=0;
+  while(k<SL){
+    const z=zonesArr[k]; let j=k+1; while(j<SL && zonesArr[j]===z) j++;
+    if(z!==null){
+      pies+=slice(k,j, z==='safe'?'var(--good)':z==='low'?'var(--crit)':'var(--warn)');
+      /* 특이점(빨강·주황) 탭 마커: 구간 중앙에 점 */
+      if(z!=='safe'){
+        const km=(k+j)/2, am=A(km), rm=R*0.66;
+        const mx=cx+rm*Math.cos(am), my=cy+rm*Math.sin(am);
+        const hour=half+Math.floor(km/12);
+        marks+=`<g class="cseg" style="cursor:pointer" data-hour="${hour}">
+          <circle cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="9" fill="transparent"/>
+          <circle cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="5.5" fill="var(--surface)"
+            stroke="${z==='low'?'var(--crit)':'var(--warn)'}" stroke-width="2.4"/>
+          <text x="${mx.toFixed(1)}" y="${(my+2.6).toFixed(1)}" text-anchor="middle"
+            font-size="7.5" font-weight="900" font-family="inherit"
+            fill="${z==='low'?'var(--crit)':'var(--warn)'}">${z==='low'?'!':'!'}</text></g>`;
+      }
+    }
+    k=j;
+  }
+  /* 12/3/6/9시 눈금 (파이 위 얇은 흰 선) */
+  let ticks='';
+  for(let h=0;h<12;h+=3){ const a=A(h*12);
+    ticks+=`<line x1="${(cx+R*0.72*Math.cos(a)).toFixed(1)}" y1="${(cy+R*0.72*Math.sin(a)).toFixed(1)}"
+      x2="${(cx+R*Math.cos(a)).toFixed(1)}" y2="${(cy+R*Math.sin(a)).toFixed(1)}"
+      stroke="var(--surface2)" stroke-width="1.2" opacity="0.7"/>`; }
+
+  el.innerHTML=`<svg width="92" height="92" viewBox="0 0 92 92" role="img" aria-label="시간별 구간 파이">
+    <circle cx="44" cy="44" r="38" fill="none" stroke="var(--hair)" stroke-width="1.6"/>
+    ${pies}${ticks}${marks}</svg>`;
+
+  el.querySelectorAll('.cseg').forEach(p=>{
+    p.addEventListener('click',()=>{
+      const hour=+p.dataset.hour;
+      const center=base+hour*3600000+1800000;
+      const cIdx=(N-1)-(NOW-center)/300000;
+      mainChart.a=cIdx-18; mainChart.b=cIdx+18;
+      mainChart.selI=-1; mainChart.render();
+      document.querySelector('.tabbar button[data-scr="scr-home"]').click();
+    });
+  });
+}
+function halfSafePct(half){
+  const day=DAYS[DAYS.length-2], dayBase=day.d.getTime();
+  let safe=0,tot=0;
+  for(let i=day.i0;i<=day.i1;i++){ if(!alive(i))continue; const d=ptDate(data[i]);
+    const hr=d.getHours()+d.getMinutes()/60; if(hr>=CLOCK_NOW_H) continue;
+    const off=(d.getTime()-dayBase)-half*3600000; if(off<0||off>=12*3600000) continue;
+    tot++; if(zoneOf(data[i].v)==='safe') safe++; }
+  return tot?Math.round(100*safe/tot):0;
+}
+function renderClocks(){
+  drawClock(document.getElementById('clockAM'), 0);
+  drawClock(document.getElementById('clockPM'), 12);
+  document.getElementById('amPct').textContent=halfSafePct(0)+'% 정상';
+  document.getElementById('pmPct').textContent=halfSafePct(12)+'% 정상';
+}
+
+/* ============ 홈 그래프 ============ */
+const mainChart=zoomChart({
+  el:document.getElementById('bigchart'), h:188, sel:document.getElementById('selHome'),
+  lim:()=>[0,N-1], def:()=>[N-145,N-1],
+  onRender(S,vs){ gspan.textContent=spanText(S);
+    stAvg.textContent=Math.round(vs.reduce((a,b)=>a+b,0)/vs.length);
+    stMin.textContent=Math.round(Math.min(...vs)); stMax.textContent=Math.round(Math.max(...vs)); },
+  afterEdit(){ renderClocks(); }
+});
+document.getElementById('greset').addEventListener('click',()=>mainChart.reset());
+
+/* ============ 기록: 일자별 ============ */
+const DAYS=(()=>{ const map=new Map();
+  data.forEach((p,i)=>{ const d=ptDate(p); const key=`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    if(!map.has(key)) map.set(key,{d:new Date(d.getFullYear(),d.getMonth(),d.getDate()),i0:i,i1:i});
+    map.get(key).i1=i; });
+  return [...map.values()];
+})();
+let dayIdx=DAYS.length-2;
+const WD=['일','월','화','수','목','금','토'];
+
+const dayChart=zoomChart({
+  el:document.getElementById('daychart'), h:168, sel:document.getElementById('selDay'),
+  lim:()=>[DAYS[dayIdx].i0, DAYS[dayIdx].i1], def:()=>[DAYS[dayIdx].i0, DAYS[dayIdx].i1],
+  onRender(S,vs){ dSpan.textContent=(S.b-S.a>=DAYS[dayIdx].i1-DAYS[dayIdx].i0-1)?'하루 전체':spanText(S);
+    const inb=vs.filter(v=>v>=BAND_LO&&v<=BAND_HI).length;
+    dAvg.textContent=Math.round(vs.reduce((a,b)=>a+b,0)/vs.length);
+    dMin.textContent=Math.round(Math.min(...vs)); dMax.textContent=Math.round(Math.max(...vs));
+    dIn.textContent=Math.round(100*inb/vs.length)+'%'; },
+  afterEdit(){ renderClocks(); }
+});
+document.getElementById('dReset').addEventListener('click',()=>dayChart.reset());
+
+function renderDay(){
+  const day=DAYS[dayIdx];
+  dLabel.textContent=`${day.d.getFullYear()}년 ${day.d.getMonth()+1}월 ${day.d.getDate()}일 (${WD[day.d.getDay()]})`;
+  dSub.textContent=`서버에서 불러옴 · ${day.i1-day.i0+1}개 측정`;
+  dPrev.disabled=(dayIdx===0); dNext.disabled=(dayIdx===DAYS.length-1);
+  dayChart.turns=findTurns(day.i0, day.i1, 5); dayChart.reset();
+  const dayT0=day.d.getTime(); let ev='';
+  for(const e of EVENTS){ const t=ptDate(data[e.i]);
+    if(t.getTime()>=dayT0&&t.getTime()<dayT0+86400000)
+      ev+=`<div class="ev warn">⟳ ${fmtHM(t)} 전극 교체 (QR: ${e.id}) — 제로 보정 완료</div>`; }
+  if(dayIdx===DAYS.length-3) ev+=`<div class="ev warn">⚠ 14:20–15:05 데이터 유실 구간 (gap)</div>`;
+  if(!ev) ev=`<div class="ev info">이 날짜에 이벤트 없음</div>`;
+  document.getElementById('dEvents').innerHTML=ev;
+}
+dPrev.addEventListener('click',()=>{ if(dayIdx>0){dayIdx--; renderDay();} });
+dNext.addEventListener('click',()=>{ if(dayIdx<DAYS.length-1){dayIdx++; renderDay();} });
+
+/* 데모용: 기준일에 오전 저전류(빨강)·오후 고전류(주황) 구간 삽입 →
+ * 시계 색·탭 점프 시연 (실데이터면 자연 발생) */
+(function(){ const rd=DAYS[DAYS.length-2];
+  for(let i=rd.i0;i<=rd.i1;i++){ const h=ptDate(data[i]).getHours();
+    if(h>=9&&h<10)  data[i].v=Math.min(data[i].v,70+(i%5));    // 오전 9시 저전류
+    if(h>=16&&h<17) data[i].v=Math.max(data[i].v,255+(i%6));   // 오후 4시 고전류
+  }
+})();
+
+renderDay();
+renderClocks();   // DAYS 정의 이후 (시계가 기준일을 참조)
+
+/* ============ 주간 패턴 (AGP) ============ */
+function renderWeek(){
+  const W=352,H=180,P={l:34,r:12,t:12,b:20};
+  /* 5분 슬롯(288)별로 요일 넘어 값 모으기 */
+  const slots=Array.from({length:288},()=>[]);
+  for(let i=0;i<N;i++){ if(!alive(i))continue; const d=ptDate(data[i]);
+    slots[Math.floor((d.getHours()*60+d.getMinutes())/5)].push(data[i].v); }
+  const med=[],p10=[],p90=[];
+  for(let s=0;s<288;s++){ const a=slots[s].slice().sort((x,y)=>x-y);
+    if(!a.length){ med.push(null); p10.push(null); p90.push(null); continue; }
+    const q=f=>a[Math.min(a.length-1,Math.floor(f*a.length))];
+    med.push(q(.5)); p10.push(q(.1)); p90.push(q(.9)); }
+  const allv=med.filter(v=>v!=null);
+  const lo=Math.min(BAND_LO-15,Math.min(...allv)-10), hi=Math.max(BAND_HI+15,Math.max(...allv)+10);
+  const X=s=>P.l+(W-P.l-P.r)*s/287, Y=v=>P.t+(H-P.t-P.b)*(1-(v-lo)/(hi-lo));
+  const yLoTop=Y(BAND_HI),yLoBot=Y(BAND_LO),cX=P.l,cW=W-P.l-P.r;
+  let zones=`<rect x="${cX}" y="${P.t}" width="${cW}" height="${yLoTop-P.t}" fill="var(--warn-soft)"/>
+    <rect x="${cX}" y="${yLoTop}" width="${cW}" height="${yLoBot-yLoTop}" fill="var(--good-soft)"/>
+    <rect x="${cX}" y="${yLoBot}" width="${cW}" height="${H-P.b-yLoBot}" fill="var(--crit-soft)"/>`;
+  let lbl=''; for(const gv of [100,150,200,250]) if(gv>lo&&gv<hi)
+    lbl+=`<text x="${P.l-6}" y="${Y(gv)+3.5}" text-anchor="end" font-size="9.5" fill="var(--muted)" font-family="inherit">${gv}</text>`;
+  let xt=''; for(let h=0;h<=24;h+=6){ const x=P.l+cW*h/24;
+    xt+=`<line x1="${x}" x2="${x}" y1="${P.t}" y2="${H-P.b}" stroke="var(--hair)" stroke-width="1"/>
+      <text x="${x}" y="${H-6}" text-anchor="middle" font-size="9.5" fill="var(--muted)" font-family="inherit">${String(h).padStart(2,'0')}시</text>`; }
+  /* 밴드 */
+  let up='',dn='';
+  for(let s=0;s<288;s++){ if(p90[s]==null)continue; up+=`${up?'L':'M'}${X(s).toFixed(1)} ${Y(p90[s]).toFixed(1)} `; }
+  for(let s=287;s>=0;s--){ if(p10[s]==null)continue; dn+=`L${X(s).toFixed(1)} ${Y(p10[s]).toFixed(1)} `; }
+  const band=`<path d="${up}${dn}Z" fill="var(--accent-soft)"/>`;
+  let mline=''; for(let s=0;s<288;s++){ if(med[s]==null)continue; mline+=`${mline?'L':'M'}${X(s).toFixed(1)} ${Y(med[s]).toFixed(1)} `; }
+  document.getElementById('weekchart').innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="주간 패턴">
+    ${zones}${lbl}${xt}${band}
+    <path d="${mline}" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+  </svg>`;
+  const inb=allv.filter(v=>v>=BAND_LO&&v<=BAND_HI).length;
+  wAvg.textContent=Math.round(allv.reduce((a,b)=>a+b,0)/allv.length);
+  wIn.textContent=Math.round(100*inb/allv.length)+'%';
+}
+
+/* 일간/주간 토글 */
+document.querySelectorAll('.segt button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.segt button').forEach(x=>x.setAttribute('aria-pressed','false'));
+    b.setAttribute('aria-pressed','true');
+    const wk=b.dataset.view==='week';
+    document.getElementById('viewDay').style.display=wk?'none':'';
+    document.getElementById('viewWeek').style.display=wk?'':'none';
+    if(wk) renderWeek();
+  });
+});
+
+/* ============ 날짜 스크롤 피커 ============ */
+(function(){
+  const bg=document.getElementById('dateBg'), wMon=document.getElementById('wMon'), wDay=document.getElementById('wDay');
+  const months=[...Array(12)].map((_,i)=>i+1), days=[...Array(31)].map((_,i)=>i+1);
+  function fill(el,arr,suf){ el.innerHTML='<div class="pad"></div>'+
+    arr.map(n=>`<div class="opt" data-n="${n}">${n}${suf}</div>`).join('')+'<div class="pad"></div>'; }
+  fill(wMon,months,'월'); fill(wDay,days,'일');
+  function centered(el){ const mid=el.scrollTop+el.clientHeight/2;
+    let best=null,bd=1e9; el.querySelectorAll('.opt').forEach(o=>{
+      const c=o.offsetTop+o.offsetHeight/2, d=Math.abs(c-mid); if(d<bd){bd=d;best=o;} });
+    el.querySelectorAll('.opt').forEach(o=>o.classList.remove('sel')); if(best)best.classList.add('sel');
+    return best?+best.dataset.n:null; }
+  function snapTo(el,n){ const o=[...el.querySelectorAll('.opt')].find(x=>+x.dataset.n===n);
+    if(o) el.scrollTop=o.offsetTop-el.clientHeight/2+o.offsetHeight/2; centered(el); }
+  wMon.addEventListener('scroll',()=>centered(wMon));
+  wDay.addEventListener('scroll',()=>centered(wDay));
+  document.getElementById('dOpen').addEventListener('click',()=>{
+    const d=DAYS[dayIdx].d; bg.classList.add('on');
+    requestAnimationFrame(()=>{ snapTo(wMon,d.getMonth()+1); snapTo(wDay,d.getDate()); });
+  });
+  document.getElementById('dateCancel').addEventListener('click',()=>bg.classList.remove('on'));
+  document.getElementById('dateGo').addEventListener('click',()=>{
+    const mo=centered(wMon), dy=centered(wDay);
+    let best=0,bd=1e9;
+    DAYS.forEach((D,k)=>{ const diff=Math.abs((D.d.getMonth()+1-mo)*31+(D.d.getDate()-dy));
+      if(diff<bd){bd=diff;best=k;} });
+    dayIdx=best; renderDay(); bg.classList.remove('on');
+  });
+})();
+
+/* ============ 탭 / 토글 / QR ============ */
+document.querySelectorAll('.tabbar button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.tabbar button').forEach(x=>x.setAttribute('aria-selected','false'));
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+    b.setAttribute('aria-selected','true'); document.getElementById(b.dataset.scr).classList.add('on');
+  });
+});
+document.querySelectorAll('.toggle').forEach(t=>{
+  t.addEventListener('click',()=>t.setAttribute('aria-checked',
+    t.getAttribute('aria-checked')==='true'?'false':'true'));
+});
+(function(){
+  const bg=document.getElementById('sheetBg'), res=document.getElementById('qrRes'),
+        ok=document.getElementById('qrOk'), msg=document.getElementById('qrMsg'); let timer=null;
+  document.getElementById('qrBtn').addEventListener('click',()=>{
+    bg.classList.add('on'); res.classList.remove('on'); ok.disabled=true; ok.style.opacity=.5;
+    msg.textContent='카메라 미리보기 (목업)';
+    timer=setTimeout(()=>{ res.classList.add('on'); msg.textContent='스캔됨'; ok.disabled=false; ok.style.opacity=1; },1200);
+  });
+  document.getElementById('qrCancel').addEventListener('click',()=>{ clearTimeout(timer); bg.classList.remove('on'); });
+  ok.addEventListener('click',()=>{ bg.classList.remove('on');
+    document.getElementById('elecNow').textContent='E-2407-113 · 로트 L23 · 방금 교체'; });
+})();
+
+
+/* =====================================================================
+ *  라이브 BLE 브리지 (네이티브 WebView 에서만 활성; 브라우저면 데모 유지)
+ * ===================================================================== */
+(function(){
+  const NB = window.AmperoNative;
+  const chip = document.querySelector('.chip.ok');
+  const conn = document.getElementById('connBg');
+  const devList = document.getElementById('devList');
+  const connMsg = document.getElementById('connMsg');
+  if(!NB){ return; }   // 브라우저 프리뷰 — 데모 유지
+
+  let live=false;
+  function goLive(){ if(live) return; live=true;
+    data.length=0; N=0; deleted.clear(); mainChart.selI=-1; setHero(null); }
+
+  let lineBuf='', lastSeq=-1; const st={};
+  function feed(text){ for(const ch of text){
+      if(ch==='\n'){ parseLine(lineBuf); lineBuf=''; }
+      else if(ch!=='\r'){ lineBuf+=ch; if(lineBuf.length>4096) lineBuf=''; } } }
+  function parseLine(t){ t=t.trim(); if(t.length<5||t[0]!=='{') return;
+    let o; try{ o=JSON.parse(t); }catch(e){ return; }
+    if(Array.isArray(o.d)){ goLive(); let added=false;
+      for(const row of o.d){ const seq=row[0], nA=row[2], rng=row[3]|0;
+        if(seq<lastSeq){ lastSeq=-1; } if(seq<=lastSeq) continue; lastSeq=seq;
+        data.push({ t:N*5, v:nA, g:rng }); N=data.length; added=true; }
+      if(added){ onNewData(); try{ NB.send('{"cmd":"ack","seq":'+lastSeq+'}'); }catch(e){} } }
+    else if(o.st!==undefined){ Object.assign(st,o); applyStatus(); } }
+
+  function applyStatus(){
+    if(st.vbat!=null){ const pct=Math.max(0,Math.min(100,Math.round((st.vbat-3000)/1200*100)));
+      const ring=document.querySelector('.dev .ring svg');
+      if(ring){ const c=ring.querySelectorAll('circle')[1];
+        c.setAttribute('stroke-dasharray',(pct/100*106.8).toFixed(1)+' 106.8');
+        c.setAttribute('stroke', pct>=40?'var(--good)':pct>=20?'var(--warn)':'var(--crit)');
+        ring.querySelector('text').textContent=pct; } }
+    const cap=document.querySelector('.dev .tx .cap');
+    if(cap){ const c = st.qi? (st.chg?'충전 중':'완충') : '패드 밖';
+      cap.textContent='연결됨 · '+c+' · 전극 '+(window.__elecDay||'1')+'일차'; }
+    const sync=document.querySelector('.sync');
+    if(sync){ if(st.fpend>0){ sync.style.display='';
+        sync.firstChild.textContent='동기화 '+st.fpend+'개 남음 '; } else sync.style.display='none'; } }
+
+  function onNewData(){ setHero(data[N-1].v);
+    if(mainChart.b>=N-2){ mainChart.b=N-1; mainChart.a=Math.max(0,N-1-144); }
+    mainChart.render(); }
+
+  function setHero(v){ const el=document.getElementById('nowVal');
+    const ar=document.getElementById('nowArrow'), pill=document.getElementById('nowPill');
+    if(v==null){ el.textContent='--'; el.className=''; ar.textContent='';
+      pill.textContent='측정 대기'; pill.className='pill bgp'; return; }
+    const z=zoneOf(v); el.textContent=v.toFixed(1); el.className='z-'+z;
+    pill.textContent=ZLAB[z]; pill.className='pill bgp z-'+z;
+    let a=null; for(let k=N-7;k<N-1;k++){ if(k>=0&&alive(k)){ a=data[k].v; break; } }
+    const slope=a==null?0:v-a; ar.className='arrow z-'+z;
+    ar.textContent = slope>8?'↑' : slope<-8?'↓' : '→'; }
+
+  window.AmperoIn=function(kind,p){
+    if(kind==='scan'){ addDev(p); }
+    else if(kind==='conn'){ if(p.connected){ conn.classList.remove('on'); chip.className='chip ok';
+        chip.childNodes[chip.childNodes.length-1].textContent=(p.name||'pstat')+' 연결됨';
+        try{ NB.stopScan(); }catch(e){} }
+      else { chip.className='chip off';
+        chip.childNodes[chip.childNodes.length-1].textContent='연결 끊김'; showConn(); } }
+    else if(kind==='ready'){ try{ NB.send('{"cmd":"status"}'); }catch(e){} }
+    else if(kind==='data'){ feed(p.text||''); }
+    else if(kind==='perm'){ if(p.granted) startScan(); else connMsg.textContent='블루투스 권한이 필요합니다.'; }
+  };
+
+  const seen={};
+  function addDev(p){ if(seen[p.address]) return; seen[p.address]=1;
+    const row=document.createElement('div'); row.className='devrow';
+    const nm=p.name||'(이름 없음)';
+    row.innerHTML='<b>'+nm+'</b><span class="rssi">'+p.rssi+' dBm</span>';
+    row.onclick=()=>{ connMsg.textContent=nm+' 에 연결 중…'; devList.innerHTML='';
+      try{ NB.connect(p.address); }catch(e){} };
+    if(/pstat/i.test(nm)) devList.insertBefore(row, devList.firstChild); else devList.appendChild(row); }
+  function startScan(){ for(const k in seen) delete seen[k]; devList.innerHTML='';
+    connMsg.textContent='주변의 pstat 기기를 검색합니다…';
+    try{ if(!NB.isBluetoothOn()){ connMsg.textContent='블루투스를 켜주세요.'; return; } }catch(e){}
+    try{ NB.startScan(); }catch(e){} }
+  function showConn(){ conn.classList.add('on'); startScan(); }
+  document.getElementById('rescan').onclick=startScan;
+
+  setHero(null); showConn();
+})();
+</script>

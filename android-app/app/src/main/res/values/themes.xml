@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- No ActionBar; the WebView draws the whole UI. Background matches the
+         app's light surface so there's no flash before the page paints. -->
+    <style name="Theme.Ampero" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/boot_bg</item>
+        <item name="android:statusBarColor">@color/boot_bg</item>
+        <item name="android:navigationBarColor">@color/boot_bg</item>
+    </style>
+</resources>
