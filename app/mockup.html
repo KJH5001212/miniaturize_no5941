@@ -1,0 +1,514 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ampero — 웨어러블 포텐쇼스탯 앱 목업</title>
+<style>
+/* ============ 토큰 ============ */
+:root {
+  --bg:#F2F7F7; --surface:#FFFFFF; --surface2:#EAF2F2;
+  --ink:#122B2E; --ink2:#3E5A5C; --muted:#5C7476; --hair:#D8E4E4;
+  --accent:#00939F; --accent-soft:rgba(0,147,159,.10);
+  --good:#1E9E5F; --good-soft:rgba(30,158,95,.12);
+  --warn:#A96A00; --warn-soft:rgba(169,106,0,.12);
+  --crit:#BF4636; --crit-soft:rgba(191,70,54,.12);
+  --band:rgba(0,147,159,.07); --shadow:0 18px 50px rgba(18,43,46,.16);
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg:#0B1416; --surface:#121E21; --surface2:#18272B;
+  --ink:#DDEBEA; --ink2:#A7BEBD; --muted:#8FA6A5; --hair:#24393D;
+  --accent:#00A5A0; --accent-soft:rgba(0,165,160,.14);
+  --good:#31A667; --good-soft:rgba(49,166,103,.16);
+  --warn:#BD8020; --warn-soft:rgba(189,128,32,.16);
+  --crit:#D66A55; --crit-soft:rgba(214,106,85,.16);
+  --band:rgba(0,165,160,.09); --shadow:0 18px 50px rgba(0,0,0,.5);
+}}
+:root[data-theme="light"] {
+  --bg:#F2F7F7; --surface:#FFFFFF; --surface2:#EAF2F2;
+  --ink:#122B2E; --ink2:#3E5A5C; --muted:#5C7476; --hair:#D8E4E4;
+  --accent:#00939F; --accent-soft:rgba(0,147,159,.10);
+  --good:#1E9E5F; --good-soft:rgba(30,158,95,.12);
+  --warn:#A96A00; --warn-soft:rgba(169,106,0,.12);
+  --crit:#BF4636; --crit-soft:rgba(191,70,54,.12);
+  --band:rgba(0,147,159,.07); --shadow:0 18px 50px rgba(18,43,46,.16);
+}
+:root[data-theme="dark"] {
+  --bg:#0B1416; --surface:#121E21; --surface2:#18272B;
+  --ink:#DDEBEA; --ink2:#A7BEBD; --muted:#8FA6A5; --hair:#24393D;
+  --accent:#00A5A0; --accent-soft:rgba(0,165,160,.14);
+  --good:#31A667; --good-soft:rgba(49,166,103,.16);
+  --warn:#BD8020; --warn-soft:rgba(189,128,32,.16);
+  --crit:#D66A55; --crit-soft:rgba(214,106,85,.16);
+  --band:rgba(0,165,160,.09); --shadow:0 18px 50px rgba(0,0,0,.5);
+}
+
+* { box-sizing:border-box; margin:0; }
+body {
+  background:var(--bg); color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR","Malgun Gothic",sans-serif;
+  line-height:1.5; -webkit-font-smoothing:antialiased;
+}
+.wrap { max-width:1060px; margin:0 auto; padding:40px 20px 80px;
+  display:flex; gap:44px; align-items:flex-start; flex-wrap:wrap; justify-content:center; }
+
+/* ============ 페이지 헤더/노트 ============ */
+.notes { flex:1 1 380px; max-width:520px; min-width:320px; }
+.notes h1 { font-size:26px; letter-spacing:-.02em; text-wrap:balance; }
+.notes .sub { color:var(--muted); margin:6px 0 26px; font-size:14.5px; }
+.note-card { background:var(--surface); border:1px solid var(--hair); border-radius:14px;
+  padding:18px 20px; margin-bottom:14px; }
+.note-card h2 { font-size:13px; text-transform:uppercase; letter-spacing:.08em;
+  color:var(--accent); margin-bottom:10px; }
+.note-card table { border-collapse:collapse; width:100%; font-size:13px; }
+.note-card td { padding:5px 8px 5px 0; vertical-align:top; border-top:1px solid var(--hair); }
+.note-card tr:first-child td { border-top:none; }
+.note-card td:first-child { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px;
+  color:var(--accent); white-space:nowrap; }
+.note-card ul { padding-left:18px; font-size:13.5px; color:var(--ink2); }
+.note-card li { margin:5px 0; }
+.note-card p { font-size:13.5px; color:var(--ink2); }
+
+/* ============ 폰 프레임 ============ */
+.phone { width:392px; flex:0 0 auto; background:var(--surface); border-radius:38px;
+  border:1px solid var(--hair); box-shadow:var(--shadow); overflow:hidden;
+  display:flex; flex-direction:column; height:812px; position:sticky; top:24px; }
+.p-body { flex:1; overflow-y:auto; padding:0 18px 12px; scrollbar-width:thin; }
+
+/* 앱 상단바 */
+.appbar { display:flex; align-items:center; gap:8px; padding:20px 18px 12px; }
+.brand { font-size:20px; font-weight:800; letter-spacing:-.02em; }
+.brand small { color:var(--accent); }
+.chip { display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600;
+  border-radius:999px; padding:4px 10px; background:var(--surface2); color:var(--ink2); }
+.chip .dot { width:7px; height:7px; border-radius:50%; }
+.chip.ok .dot { background:var(--good); } .chip.ok { color:var(--good); background:var(--good-soft); }
+.spacer { flex:1; }
+.batt { display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700;
+  color:var(--ink2); font-variant-numeric:tabular-nums; }
+.batt svg { display:block; }
+
+/* 동기화 배너 */
+.sync { margin:4px 0 12px; background:var(--accent-soft); border:1px solid transparent;
+  border-radius:12px; padding:10px 14px; font-size:12.5px; color:var(--accent); font-weight:600; }
+.sync .bar { height:4px; border-radius:2px; background:var(--hair); margin-top:7px; overflow:hidden; }
+.sync .bar i { display:block; height:100%; width:68%; background:var(--accent); border-radius:2px; }
+
+/* 히어로 판독 */
+.hero { background:var(--surface2); border-radius:20px; padding:22px 20px 18px; text-align:center; }
+.eyebrow { font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--muted); }
+.reading { display:flex; align-items:baseline; justify-content:center; gap:8px; margin-top:6px; }
+.reading b { font-size:64px; font-weight:800; letter-spacing:-.03em; line-height:1;
+  font-variant-numeric:tabular-nums; }
+.reading span { font-size:20px; font-weight:700; color:var(--muted); }
+.trend { display:inline-flex; align-items:center; gap:7px; margin-top:10px; font-size:13.5px;
+  font-weight:700; color:var(--ink2); }
+.trend svg { display:block; }
+.pill { display:inline-block; margin-top:12px; font-size:12px; font-weight:700;
+  border-radius:999px; padding:5px 12px; }
+.pill.good { background:var(--good-soft); color:var(--good); }
+.meta { margin-top:10px; font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; }
+
+/* 카드 공통 */
+.card { background:var(--surface2); border-radius:16px; padding:14px 16px; margin-top:12px; }
+.card h3 { font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--muted); margin-bottom:8px; }
+.row { display:flex; gap:12px; }
+.row .card { flex:1; margin-top:12px; }
+.stat { font-size:22px; font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:-.01em; }
+.stat small { font-size:12px; font-weight:600; color:var(--muted); margin-left:2px; }
+.cap { font-size:11.5px; color:var(--muted); margin-top:2px; }
+
+/* 차트 */
+.chart-wrap { position:relative; }
+.chart-wrap svg { display:block; width:100%; height:auto; }
+.tip { position:absolute; pointer-events:none; background:var(--ink); color:var(--bg);
+  font-size:11.5px; font-weight:600; border-radius:8px; padding:6px 9px; white-space:nowrap;
+  transform:translate(-50%,-115%); opacity:0; transition:opacity .1s;
+  font-variant-numeric:tabular-nums; }
+@media (prefers-reduced-motion: reduce) { .tip { transition:none; } }
+.seg { display:flex; background:var(--surface2); border-radius:10px; padding:3px; gap:2px; margin:4px 0 12px; }
+.seg button { flex:1; border:0; background:transparent; color:var(--muted); font:inherit;
+  font-size:12.5px; font-weight:700; padding:7px 0; border-radius:8px; cursor:pointer; }
+.seg button[aria-pressed="true"] { background:var(--surface); color:var(--ink);
+  box-shadow:0 1px 4px rgba(0,0,0,.12); }
+.seg button:focus-visible { outline:2px solid var(--accent); }
+
+/* 기록 리스트 */
+.day { font-size:11.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--muted); margin:18px 2px 6px; }
+.log { background:var(--surface2); border-radius:14px; overflow:hidden; }
+.log .item { display:flex; align-items:center; gap:12px; padding:12px 14px;
+  border-top:1px solid var(--hair); font-size:13.5px; }
+.log .item:first-child { border-top:none; }
+.log .t { color:var(--muted); font-size:12px; font-variant-numeric:tabular-nums; width:44px; }
+.log .v { font-weight:800; font-variant-numeric:tabular-nums; }
+.log .v small { font-weight:600; color:var(--muted); }
+.log .g { margin-left:auto; font-size:11px; color:var(--muted); font-weight:600; }
+.ev { display:flex; gap:10px; align-items:center; padding:12px 14px; border-radius:14px;
+  margin-top:8px; font-size:12.5px; font-weight:600; }
+.ev.warn { background:var(--warn-soft); color:var(--warn); }
+.ev.info { background:var(--accent-soft); color:var(--accent); }
+
+/* 설정 */
+.set { background:var(--surface2); border-radius:14px; margin-top:12px; overflow:hidden; }
+.set .head { padding:12px 16px 4px; font-size:12px; font-weight:700; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--muted); }
+.set .item { display:flex; align-items:center; padding:12px 16px; gap:10px;
+  border-top:1px solid var(--hair); font-size:14px; }
+.set .item:nth-child(2) { border-top:none; }
+.set .item .lab { flex:1; }
+.set .item .lab .cap { margin-top:1px; }
+.set .val { color:var(--muted); font-weight:600; font-size:13.5px; font-variant-numeric:tabular-nums; }
+.toggle { width:44px; height:26px; border-radius:13px; background:var(--hair); border:0;
+  position:relative; cursor:pointer; transition:background .15s; flex:0 0 auto; }
+.toggle::after { content:""; position:absolute; top:3px; left:3px; width:20px; height:20px;
+  border-radius:50%; background:var(--surface); box-shadow:0 1px 3px rgba(0,0,0,.25);
+  transition:left .15s; }
+.toggle[aria-checked="true"] { background:var(--accent); }
+.toggle[aria-checked="true"]::after { left:21px; }
+.toggle:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+@media (prefers-reduced-motion: reduce) { .toggle, .toggle::after { transition:none; } }
+.btn { display:block; width:100%; border:0; font:inherit; font-weight:700; font-size:14px;
+  padding:13px; border-radius:12px; cursor:pointer; margin-top:10px;
+  background:var(--accent); color:#fff; }
+.btn.ghost { background:var(--surface2); color:var(--accent); }
+.btn.danger { background:transparent; color:var(--crit); }
+
+/* 하단 탭바 */
+.tabbar { display:flex; border-top:1px solid var(--hair); background:var(--surface);
+  padding:8px 6px calc(8px + env(safe-area-inset-bottom)); }
+.tabbar button { flex:1; border:0; background:none; color:var(--muted); font:inherit;
+  font-size:10.5px; font-weight:700; cursor:pointer; display:flex; flex-direction:column;
+  align-items:center; gap:3px; padding:6px 0; border-radius:10px; }
+.tabbar button svg { display:block; }
+.tabbar button[aria-selected="true"] { color:var(--accent); }
+.tabbar button:focus-visible { outline:2px solid var(--accent); }
+.screen { display:none; } .screen.on { display:block; }
+
+@media (max-width:860px){ .phone { position:static; } }
+</style>
+
+<div class="wrap">
+
+<!-- ==================== 폰 목업 ==================== -->
+<div class="phone" role="region" aria-label="앱 목업">
+  <div class="appbar">
+    <div class="brand">Ampero<small>.</small></div>
+    <span class="chip ok"><span class="dot"></span>pstat 연결됨</span>
+    <div class="spacer"></div>
+    <div class="batt" title="배터리 82% · 충전패드 아님">
+      <svg width="22" height="12" viewBox="0 0 22 12" fill="none" aria-hidden="true">
+        <rect x="1" y="1" width="18" height="10" rx="2.5" stroke="currentColor" stroke-width="1.4"/>
+        <rect x="3" y="3" width="11.5" height="6" rx="1" fill="currentColor"/>
+        <rect x="20" y="4" width="2" height="4" rx="1" fill="currentColor"/>
+      </svg>82%
+    </div>
+  </div>
+
+  <div class="p-body">
+
+    <!-- ===== 홈 ===== -->
+    <section class="screen on" id="scr-home">
+      <div class="sync">밀린 측정 214개 동기화 중 · 68%
+        <div class="bar"><i></i></div>
+      </div>
+
+      <div class="hero">
+        <div class="eyebrow">현재 전류</div>
+        <div class="reading"><b id="nowVal">142.3</b><span>nA</span></div>
+        <div class="trend" id="nowTrend">
+          <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M3 10 H17 M12 5 L17 10 L12 15" stroke="var(--accent)" stroke-width="2.4"
+              fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>안정
+        </div>
+        <div><span class="pill good">목표 범위 내 · 80–240 nA</span></div>
+        <div class="meta">3분 전 · 게인 G1 · 요약 모드</div>
+      </div>
+
+      <div class="card">
+        <h3>최근 3시간</h3>
+        <div class="chart-wrap" id="spark"></div>
+      </div>
+
+      <div class="row">
+        <div class="card"><h3>다음 측정</h3><div class="stat" id="cd">03:47</div>
+          <div class="cap">사이클 5초 / 5분</div></div>
+        <div class="card"><h3>오늘 평균</h3><div class="stat">156<small>nA</small></div>
+          <div class="cap">범위 내 94%</div></div>
+      </div>
+    </section>
+
+    <!-- ===== 그래프 ===== -->
+    <section class="screen" id="scr-graph">
+      <div class="seg" role="tablist" aria-label="기간">
+        <button aria-pressed="false" data-h="3">3시간</button>
+        <button aria-pressed="true"  data-h="12">12시간</button>
+        <button aria-pressed="false" data-h="24">24시간</button>
+        <button aria-pressed="false" data-h="168">7일</button>
+      </div>
+      <div class="card" style="margin-top:0">
+        <div class="chart-wrap" id="bigchart"></div>
+      </div>
+      <div class="row">
+        <div class="card"><h3>평균</h3><div class="stat" id="stAvg">158<small>nA</small></div></div>
+        <div class="card"><h3>최저</h3><div class="stat" id="stMin">121<small>nA</small></div></div>
+        <div class="card"><h3>최고</h3><div class="stat" id="stMax">213<small>nA</small></div></div>
+      </div>
+      <div class="card"><h3>목표 범위 내 시간</h3>
+        <div class="stat" id="stIn">94<small>%</small></div>
+        <div class="cap">목표 80–240 nA · 측정 <span id="stN">144</span>회</div>
+      </div>
+    </section>
+
+    <!-- ===== 기록 ===== -->
+    <section class="screen" id="scr-log">
+      <div class="ev warn">⚠ 14:20–15:05 데이터 유실 구간 (저장공간 초과 · gap)</div>
+      <div class="day">오늘</div>
+      <div class="log" id="logToday"></div>
+      <div class="ev info">✓ 10:12 스케일 캘리브레이션 완료 (1 MΩ 더미셀 · scale 1.013)</div>
+      <div class="day">어제</div>
+      <div class="log" id="logYest"></div>
+    </section>
+
+    <!-- ===== 설정 ===== -->
+    <section class="screen" id="scr-set">
+      <div class="set">
+        <div class="head">측정</div>
+        <div class="item"><div class="lab">모드</div><div class="val">사이클 · 5초 / 5분</div></div>
+        <div class="item"><div class="lab">샘플레이트</div><div class="val">10 Hz</div></div>
+        <div class="item">
+          <div class="lab">요약 모드 (agg)
+            <div class="cap">사이클당 적분 기울기 1점만 저장 — 배터리·저장공간 절약</div></div>
+          <button class="toggle" role="switch" aria-checked="true" aria-label="요약 모드"></button>
+        </div>
+        <div class="item">
+          <div class="lab">오토레인지<div class="cap">게인 자동 전환 (G0–G2)</div></div>
+          <button class="toggle" role="switch" aria-checked="true" aria-label="오토레인지"></button>
+        </div>
+      </div>
+
+      <div class="set">
+        <div class="head">하드웨어</div>
+        <div class="item"><div class="lab">RF (TIA 저항)</div><div class="val">2.0 MΩ</div></div>
+        <div class="item"><div class="lab">오버샘플링</div><div class="val">64×</div></div>
+      </div>
+
+      <div class="set">
+        <div class="head">캘리브레이션</div>
+        <div class="item"><div class="lab">마지막 보정
+          <div class="cap">7월 10일 · scale 1.013 · 오프셋 −2.1 nA</div></div></div>
+      </div>
+      <button class="btn ghost">제로 보정 (전극 개방 상태에서)</button>
+      <button class="btn ghost">스케일 보정 (더미셀 연결 후)</button>
+
+      <div class="set">
+        <div class="head">기기</div>
+        <div class="item"><div class="lab">펌웨어</div><div class="val">pstat v1.2.0</div></div>
+        <div class="item"><div class="lab">배터리 전압</div><div class="val">3.92 V</div></div>
+        <div class="item"><div class="lab">저장 대기 (fpend)</div><div class="val">214 샘플</div></div>
+      </div>
+      <button class="btn danger">기기 연결 해제</button>
+    </section>
+  </div>
+
+  <!-- 탭바 -->
+  <nav class="tabbar" role="tablist" aria-label="화면">
+    <button role="tab" aria-selected="true" data-scr="scr-home">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M3.5 9.5 L11 3 L18.5 9.5 V18 a1 1 0 0 1 -1 1 H4.5 a1 1 0 0 1 -1 -1 Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>홈</button>
+    <button role="tab" aria-selected="false" data-scr="scr-graph">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M3 16 L8 10 L12 13 L19 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 20 H19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>그래프</button>
+    <button role="tab" aria-selected="false" data-scr="scr-log">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><rect x="4" y="3" width="14" height="16" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 8 H14 M8 12 H14 M8 16 H11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>기록</button>
+    <button role="tab" aria-selected="false" data-scr="scr-set">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M11 2.5 V5 M11 17 V19.5 M2.5 11 H5 M17 11 H19.5 M5 5 L6.8 6.8 M15.2 15.2 L17 17 M17 5 L15.2 6.8 M6.8 15.2 L5 17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>설정</button>
+  </nav>
+</div>
+
+<!-- ==================== 설계 노트 ==================== -->
+<div class="notes">
+  <h1>Ampero — 웨어러블 포텐쇼스탯 전용 앱 <span style="color:var(--accent)">목업 v0.1</span></h1>
+  <p class="sub">상용 CGM(연속혈당) 앱 문법 그대로, 표기만 전류(nA). 왼쪽 폰에서 탭·그래프·설정을
+  직접 눌러볼 수 있어. 이 화면 구성이 확정되면 Kotlin(Compose)으로 실제 앱을 빌드한다.</p>
+
+  <div class="note-card">
+    <h2>펌웨어 ↔ UI 매핑</h2>
+    <table>
+      <tr><td>d[[…]]</td><td>홈 판독값·스파크라인·그래프 (agg 모드 = 사이클당 1점)</td></tr>
+      <tr><td>vbat</td><td>상단 배터리 % (전압→% 룩업), 설정→기기</td></tr>
+      <tr><td>qi + chg</td><td>충전 배너: 패드 밖 / 충전 중 / 완충</td></tr>
+      <tr><td>fpend</td><td>홈 상단 동기화 배너 + 진행률</td></tr>
+      <tr><td>gap</td><td>기록 탭 "데이터 유실 구간" 경고</td></tr>
+      <tr><td>lb</td><td>저전압 경고 배너 + 측정 시작 차단 안내</td></tr>
+      <tr><td>rf / os / agg</td><td>설정 → 하드웨어·측정 (config 명령 전송)</td></tr>
+      <tr><td>zero / cal</td><td>설정 → 캘리브레이션 버튼 2개</td></tr>
+    </table>
+  </div>
+
+  <div class="note-card">
+    <h2>다듬을 후보 — 피드백 주면 반영</h2>
+    <ul>
+      <li>앱 이름/로고 (지금은 가칭 "Ampero")</li>
+      <li>목표 범위 기본값 80–240 nA — 센서 확정 후 조정, 사용자 편집 UI 여부</li>
+      <li>추세 화살표 기준 (지금: 최근 30분 기울기 ±10%/h)</li>
+      <li>홈의 "다음 측정" 카운트다운 필요 여부</li>
+      <li>단위 전환 준비 (nA → 추후 농도 환산 계수 입력란?)</li>
+      <li>알림 정책: 범위 이탈 / 배터리 / 동기화 완료 푸시</li>
+    </ul>
+  </div>
+
+  <div class="note-card">
+    <h2>다음 단계</h2>
+    <p>① 이 목업에서 화면·문구·색 확정 → ② Kotlin + Jetpack Compose 프로젝트 생성
+    (기존 BLE 계층 <code>BleManager</code>/<code>PstatParser</code> 재사용) → ③ 한 번에 빌드.
+    라이트/다크 모두 이 팔레트로 검증 완료(CVD·대비 통과).</p>
+  </div>
+</div>
+</div>
+
+<script>
+/* ============ 데모 데이터 (결정적 PRNG — 새로고침해도 동일) ============ */
+function rng(seed){ return function(){ seed=(seed*1103515245+12345)&0x7fffffff; return seed/0x7fffffff; }; }
+const R = rng(42);
+const N = 288;                       // 24h × 5분 간격 (agg 모드: 사이클당 1점)
+const data = [];                     // {t(분, 0=24h전), v(nA), g(게인)}
+let base = 205;
+for (let i=0;i<N;i++){
+  base += (R()-0.5)*2.2 - 0.18 + 3.2*Math.sin(i/34)*0.08;
+  const v = base + (R()-0.5)*5;
+  data.push({ t:i*5, v:Math.max(60,v), g: v>180?2:1 });
+}
+const nowV = data[N-1].v;
+document.getElementById('nowVal').textContent = nowV.toFixed(1);
+
+/* 추세 화살표: 최근 30분 기울기 */
+(function(){
+  const a = data[N-7].v, b = nowV, slope = (b-a)/a;
+  const el = document.getElementById('nowTrend');
+  let rot = 0, txt = '안정';
+  if (slope < -0.03){ rot = 35; txt = '감소 중'; }
+  if (slope >  0.03){ rot = -35; txt = '상승 중'; }
+  el.querySelector('svg').style.transform = `rotate(${rot}deg)`;
+  el.childNodes[el.childNodes.length-1].textContent = txt;
+})();
+
+/* ============ 차트 렌더러 (SVG + 호버 툴팁) ============ */
+const BAND_LO = 80, BAND_HI = 240;
+function fmtT(min){                  // min = 데이터 시작(24h*7 전)으로부터 분
+  const ago = (N-1)*5 - min;
+  const d = new Date(Date.now() - ago*60000);
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function drawChart(el, pts, opt){
+  const W = opt.w||352, H = opt.h||190, P = {l:34,r:12,t:10,b:20};
+  const lo = Math.min(BAND_LO-15, Math.min(...pts.map(p=>p.v))-10);
+  const hi = Math.max(BAND_HI+15, Math.max(...pts.map(p=>p.v))+10);
+  const X = i => P.l + (W-P.l-P.r) * i/(pts.length-1);
+  const Y = v => P.t + (H-P.t-P.b) * (1 - (v-lo)/(hi-lo));
+  let grid='', lbl='';
+  for (const gv of [100,150,200]){
+    grid += `<line x1="${P.l}" x2="${W-P.r}" y1="${Y(gv)}" y2="${Y(gv)}" stroke="var(--hair)" stroke-width="1"/>`;
+    lbl  += `<text x="${P.l-6}" y="${Y(gv)+3.5}" text-anchor="end" font-size="9.5" fill="var(--muted)" font-family="inherit">${gv}</text>`;
+  }
+  const line = pts.map((p,i)=>`${i?'L':'M'}${X(i).toFixed(1)} ${Y(p.v).toFixed(1)}`).join(' ');
+  const area = line + ` L${X(pts.length-1).toFixed(1)} ${Y(lo)} L${X(0).toFixed(1)} ${Y(lo)} Z`;
+  const last = pts[pts.length-1];
+  el.innerHTML = `
+  <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="전류 추이 그래프">
+    <rect x="${P.l}" y="${Y(BAND_HI)}" width="${W-P.l-P.r}" height="${Y(BAND_LO)-Y(BAND_HI)}"
+      fill="var(--band)" rx="3"/>
+    ${grid}${lbl}
+    <path d="${area}" fill="var(--accent-soft)"/>
+    <path d="${line}" fill="none" stroke="var(--accent)" stroke-width="2"
+      stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${X(pts.length-1)}" cy="${Y(last.v)}" r="4" fill="var(--accent)"
+      stroke="var(--surface2)" stroke-width="2"/>
+    <line id="xh" x1="0" x2="0" y1="${P.t}" y2="${H-P.b}" stroke="var(--muted)"
+      stroke-width="1" stroke-dasharray="3 3" opacity="0"/>
+    <circle id="hpt" r="4" fill="var(--accent)" stroke="var(--surface2)" stroke-width="2" opacity="0"/>
+    <text x="${W-P.r}" y="${H-6}" text-anchor="end" font-size="9.5" fill="var(--muted)" font-family="inherit">지금</text>
+    <text x="${P.l}" y="${H-6}" font-size="9.5" fill="var(--muted)" font-family="inherit">${opt.startLabel||''}</text>
+  </svg><div class="tip" role="status"></div>`;
+  const svg = el.querySelector('svg'), tip = el.querySelector('.tip'),
+        xh = el.querySelector('#xh'), hpt = el.querySelector('#hpt');
+  function move(ev){
+    const r = svg.getBoundingClientRect();
+    const cx = (ev.touches?ev.touches[0].clientX:ev.clientX) - r.left;
+    const i = Math.round((cx/r.width*W - P.l)/((W-P.l-P.r)/(pts.length-1)));
+    if (i<0||i>=pts.length) return hide();
+    const p = pts[i], sx = X(i), sy = Y(p.v);
+    xh.setAttribute('x1',sx); xh.setAttribute('x2',sx); xh.style.opacity=1;
+    hpt.setAttribute('cx',sx); hpt.setAttribute('cy',sy); hpt.style.opacity=1;
+    tip.style.left = (sx/W*100)+'%';
+    tip.style.top  = (sy/H*100)+'%';
+    tip.textContent = `${fmtT(p.t)} · ${p.v.toFixed(1)} nA · G${p.g}`;
+    tip.style.opacity = 1;
+  }
+  function hide(){ tip.style.opacity=0; xh.style.opacity=0; hpt.style.opacity=0; }
+  svg.addEventListener('mousemove', move);
+  svg.addEventListener('touchstart', move, {passive:true});
+  svg.addEventListener('touchmove', move, {passive:true});
+  svg.addEventListener('mouseleave', hide);
+  svg.addEventListener('touchend', hide);
+}
+
+/* 홈 스파크라인 (3h = 36점) */
+drawChart(document.getElementById('spark'), data.slice(-36), {h:120, startLabel:'3시간 전'});
+
+/* 그래프 탭 — 기간 전환 */
+function renderBig(hours){
+  const n = Math.min(N, Math.round(hours*60/5));
+  const pts = data.slice(-n);
+  drawChart(document.getElementById('bigchart'), pts,
+    {h:210, startLabel: hours>=168?'7일 전':hours+'시간 전'});
+  const vs = pts.map(p=>p.v);
+  const inb = vs.filter(v=>v>=BAND_LO&&v<=BAND_HI).length;
+  stAvg.firstChild.textContent = Math.round(vs.reduce((a,b)=>a+b)/vs.length);
+  stMin.firstChild.textContent = Math.round(Math.min(...vs));
+  stMax.firstChild.textContent = Math.round(Math.max(...vs));
+  stIn.firstChild.textContent  = Math.round(100*inb/vs.length);
+  stN.textContent = vs.length;
+}
+document.querySelectorAll('.seg button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.seg button').forEach(x=>x.setAttribute('aria-pressed','false'));
+    b.setAttribute('aria-pressed','true');
+    renderBig(+b.dataset.h);
+  });
+});
+renderBig(12);
+
+/* 기록 리스트 */
+function logRows(el, rows){
+  el.innerHTML = rows.map(r=>`<div class="item"><span class="t">${r[0]}</span>
+    <span class="v">${r[1]} <small>nA</small></span><span class="g">G${r[2]} · 요약</span></div>`).join('');
+}
+logRows(document.getElementById('logToday'), [
+  ['16:05','141.8',1],['16:00','142.6',1],['15:55','144.1',1],['15:50','143.0',1],
+  ['15:45','146.9',1],['15:40','149.2',1]]);
+logRows(document.getElementById('logYest'), [
+  ['23:55','171.3',1],['23:50','170.8',1],['23:45','173.5',1],['23:40','177.0',2]]);
+
+/* 탭 전환 */
+document.querySelectorAll('.tabbar button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.tabbar button').forEach(x=>x.setAttribute('aria-selected','false'));
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+    b.setAttribute('aria-selected','true');
+    document.getElementById(b.dataset.scr).classList.add('on');
+  });
+});
+
+/* 토글 (목업 동작만) */
+document.querySelectorAll('.toggle').forEach(t=>{
+  t.addEventListener('click',()=>t.setAttribute('aria-checked',
+    t.getAttribute('aria-checked')==='true'?'false':'true'));
+});
+
+/* 카운트다운 데모 */
+(function(){
+  let s = 227;
+  setInterval(()=>{ s = s>0 ? s-1 : 300;
+    cd.textContent = `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+  }, 1000);
+})();
+</script>
