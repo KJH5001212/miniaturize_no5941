@@ -500,9 +500,11 @@ static void nus_received(struct bt_conn *conn, const uint8_t *data, uint16_t len
 			fl_acked = true;
 			break;
 		}
-		if (fl_wait || flog_pending() > 0) {
-			/* 재생중 도착한 기타 ack: 옛 세션 seq 가 라이브 seq 와
-			 * 겹칠 수 있으므로 RAM 에 적용 금지 (미수신분 오해제 방지) */
+		if (atomic_get(&g_state) != PSTAT_RUN &&
+		    (fl_wait || flog_pending() > 0)) {
+			/* 재생 국면(비측정+백로그)의 기타 ack: 옛 세션 seq 가 라이브
+			 * seq 와 겹칠 수 있으므로 RAM 에 적용 금지 (오해제 방지).
+			 * 측정 중엔 라이브 스트림의 ack 이므로 정상 적용. */
 			break;
 		}
 		databuf_ack(c.ack_seq);
@@ -755,34 +757,44 @@ int main(void)
 			continue;
 		}
 
-		/* 연결됨: 플래시 백로그 먼저 재생 — 오래된 데이터부터 순서 보존.
+		/* 연결됨: 플래시 백로그 재생은 **측정 중이 아닐 때만** (IDLE/휴지기).
+		 * 이유: ① 코인셀 IR 로 라디오 버스트가 전압 새그 유발 — 측정 부하와
+		 * 겹치지 않게, ② 재생 라디오 노이즈가 아날로그 측정에 침투 방지.
 		 * stop-and-wait: 배치 ack 확인 후 다음 배치 (ack 유실 시 재전송,
-		 * 중복은 앱 파서가 seq 로 걸러냄). 그동안 라이브는 RAM 에 쌓임. */
-		if (fl_wait) {
-			if (fl_acked) {
-				flog_free_batch(fl_wait_n);
-				fl_wait = false;
-				fl_acked = false;
-			} else if ((uint32_t)(tick - fl_wait_tick) > FL_ACK_TICKS) {
-				fl_wait = false;   /* 타임아웃 → 같은 배치 재전송 */
+		 * 중복은 앱 파서가 seq 로 걸러냄). */
+		bool measuring = (atomic_get(&g_state) == PSTAT_RUN);
+
+		if (measuring) {
+			fl_wait = false;    /* 재생 일시정지 — 측정 끝나면 tail 부터 재개 */
+			fl_acked = false;
+		} else {
+			if (fl_wait) {
+				if (fl_acked) {
+					flog_free_batch(fl_wait_n);
+					fl_wait = false;
+					fl_acked = false;
+				} else if ((uint32_t)(tick - fl_wait_tick) > FL_ACK_TICKS) {
+					fl_wait = false;   /* 타임아웃 → 같은 배치 재전송 */
+				}
 			}
-		}
-		if (!fl_wait && flog_pending() > 0) {
-			uint32_t k = flog_peek_batch(batch, BATCH_MAX);
-			if (k == 0) {
-				flog_free_batch(1);   /* 손상 레코드 스킵 (livelock 방지) */
-			} else if (send_batch(batch, k) == 0) {
-				fl_wait = true;
-				fl_acked = false;
-				fl_wait_seq = batch[k - 1].seq;
-				fl_wait_n = k;
-				fl_wait_tick = tick;
+			if (!fl_wait && flog_pending() > 0) {
+				uint32_t k = flog_peek_batch(batch, BATCH_MAX);
+				if (k == 0) {
+					flog_free_batch(1);   /* 손상 레코드 스킵 (livelock 방지) */
+				} else if (send_batch(batch, k) == 0) {
+					fl_wait = true;
+					fl_acked = false;
+					fl_wait_seq = batch[k - 1].seq;
+					fl_wait_n = k;
+					fl_wait_tick = tick;
+				}
 			}
 		}
 
 		/* 라이브 드레인 (무손실: 전송 성공한 배치만 절대위치 commit).
-		 * 플래시 백로그가 다 빠진 뒤에만 — seq 순서 보존 */
-		if (!fl_wait && flog_pending() == 0) {
+		 * 측정 중엔 항상 (백로그는 일시정지 상태) / 유휴·휴지기엔
+		 * 백로그가 다 빠진 뒤에만 — 시간순 보존 */
+		if (measuring || (!fl_wait && flog_pending() == 0)) {
 			for (int it = 0; it < DRAIN_ITERS; it++) {
 				uint32_t base;
 				uint32_t k = databuf_peek_batch(batch, BATCH_MAX, &base);
