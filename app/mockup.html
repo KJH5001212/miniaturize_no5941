@@ -490,7 +490,7 @@ body {
 
 <!-- ==================== 설계 노트 ==================== -->
 <div class="notes">
-  <h1>Ampero — 웨어러블 포텐쇼스탯 전용 앱 <span style="color:var(--accent)">목업 v0.9</span></h1>
+  <h1>Ampero — 웨어러블 포텐쇼스탯 전용 앱 <span style="color:var(--accent)">목업 v1.0</span></h1>
   <p class="sub">CGM 문법으로 직관성을 끌어올린 라운드. 값·그래프를 구간 색으로 말하고,
   추세 화살표·오전/오후 TIR 시계·주간 패턴·튀는 값 삭제까지. 표기는 전류(nA).</p>
   <div class="legend">
@@ -505,7 +505,8 @@ body {
       <li><b>구간 색상</b>: 안전=초록·저전류=빨강·고전류=주황. 그래프 배경 3존 음영 +
         곡선 구간별 색 + 현재값·화살표 색</li>
       <li><b>추세 화살표</b>: 위/평형/아래 3단계 (최근 30분 기울기), 숫자 옆</li>
-      <li><b>오전·오후 시계</b> 2개: 시간별 구간색 링, 가운데 그 반나절의 정상(안전) 비율 %</li>
+      <li><b>오전·오후 시계</b> 2개: <b>연속 도넛</b>(구간색이 이어짐), 미래 시간대는 흰 실선,
+        가운데 정상 비율 %. <b>빨강·주황 구간을 탭하면</b> 홈 그래프가 그 시간대로 점프</li>
       <li>홈 위젯: 플랫폼 API 필요 — <b>메모만</b> (아래 백로그)</li>
       <li><b>기록 일간</b>: 날짜를 탭하면 <b>월·일 스크롤 휠</b>로 이동. <b>주간 패턴</b> 탭
         = 7일 겹쳐 중앙값+10–90% 밴드(AGP)로 반복 패턴 확인</li>
@@ -755,41 +756,77 @@ function zoomChart(cfg){
 const spanText=S=>{ const h=(S.b-S.a)*5/60;
   return h>=48?`${(h/24).toFixed(1)}일 표시`:h>=1?`${h.toFixed(1)}시간 표시`:`${Math.round(h*60)}분 표시`; };
 
-/* ============ 오전/오후 시계 ============ */
-function drawClock(el, hours, safePct){
-  const cx=44,cy=44,r=34, seg=(Math.PI*2)/12, gap=0.09;
-  function arc(a0,a1,col){
-    const x0=cx+r*Math.cos(a0), y0=cy+r*Math.sin(a0), x1=cx+r*Math.cos(a1), y1=cy+r*Math.sin(a1);
-    return `<path d="M${x0.toFixed(1)} ${y0.toFixed(1)} A${r} ${r} 0 0 1 ${x1.toFixed(1)} ${y1.toFixed(1)}"
-      fill="none" stroke="${col}" stroke-width="7" stroke-linecap="round"/>`;
+/* ============ 오전/오후 시계 (연속 도넛) ============ */
+/* half=0(오전 0–12) / 12(오후 12–24). 5분 슬롯을 이어붙인 연속 링:
+ *  안전=초록 / 저=빨강 / 고=주황 / 미래(데이터 없음)=흰 실선.
+ *  빨강·주황 구간을 탭하면 홈 그래프가 그 시간대로 점프. */
+/* 데모: 시계는 '오늘'을 나타내되, 결정적 시연을 위해 색 변화가 뚜렷한
+ * 기준일(7/12)을 쓰고 현재시각을 20:00 으로 고정 → 20시 이후는 미래(흰선). */
+const CLOCK_NOW_H=20;
+function drawClock(el, half){
+  const cx=44,cy=44,r=34, R2=Math.PI*2;
+  const day=DAYS[DAYS.length-2];             // 기준일
+  const dayBase=day.d.getTime();
+  const SL=144;                              // 12시간 × 12슬롯(5분)
+  const zonesArr=new Array(SL).fill(null);   // 'safe'|'low'|'high'|null(미래)
+  for(let i=day.i0;i<=day.i1;i++){ if(!alive(i))continue; const d=ptDate(data[i]);
+    const hr=d.getHours()+d.getMinutes()/60;
+    if(hr>=CLOCK_NOW_H) continue;            // 미래(흰선)로 남김
+    const off=(d.getTime()-dayBase)-half*3600000;
+    if(off<0||off>=12*3600000) continue;
+    zonesArr[Math.floor(off/300000)]=zoneOf(data[i].v);
   }
-  let arcs='';
-  for(let h=0;h<12;h++){ const a0=-Math.PI/2+h*seg+gap, a1=-Math.PI/2+(h+1)*seg-gap;
-    const col=hours[h]?ZCOL[hours[h]]:'var(--hair)'; arcs+=arc(a0,a1,col); }
+  const base=dayBase;
+  /* 안전 비율 */
+  let safe=0,tot=0; zonesArr.forEach(z=>{ if(z){tot++; if(z==='safe')safe++;} });
+  const pct=tot?Math.round(100*safe/tot):0;
+
+  const A=k=>-Math.PI/2 + (k/SL)*R2;          // 슬롯 k 의 시작각 (12시 위, 시계방향)
+  const pt=(ang)=>[cx+r*Math.cos(ang), cy+r*Math.sin(ang)];
+  function seg(k0,k1,stroke,dashed,clickHour){
+    const a0=A(k0), a1=A(k1); const [x0,y0]=pt(a0),[x1,y1]=pt(a1);
+    const large=(a1-a0)>Math.PI?1:0;
+    const dash=dashed?' stroke-dasharray="1.4 2.4"':'';
+    const cls=clickHour!=null?' class="cseg" style="cursor:pointer"':'';
+    const dh=clickHour!=null?` data-hour="${clickHour}"`:'';
+    return `<path d="M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 ${large} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}"
+      fill="none" stroke="${stroke}" stroke-width="7"${dash}${cls}${dh}/>`;
+  }
+  /* 연속 구간 병합 (같은 색끼리) */
+  let paths='';
+  let k=0;
+  while(k<SL){
+    const z=zonesArr[k]; let j=k+1; while(j<SL && zonesArr[j]===z) j++;
+    if(z===null){
+      paths+=seg(k,j,'var(--surface)',true,null);            // 미래 = 흰 실선(점선)
+    } else {
+      const col=ZCOL[z];
+      const clickH=(z==='safe')?null: half + Math.floor(k/12); // 빨강/주황만 클릭
+      paths+=seg(k,j,col,false,clickH);
+    }
+    k=j;
+  }
   el.innerHTML=`<svg width="88" height="88" viewBox="0 0 88 88" role="img" aria-label="시간별 구간">
-    ${arcs}
+    <circle cx="44" cy="44" r="34" fill="none" stroke="var(--hair)" stroke-width="7" opacity="0.5"/>
+    ${paths}
     <text x="44" y="43" text-anchor="middle" class="pct" font-family="inherit"
-      fill="${safePct>=70?'var(--good)':safePct>=40?'var(--warn)':'var(--crit)'}">${safePct}%</text>
+      fill="${pct>=70?'var(--good)':pct>=40?'var(--warn)':'var(--crit)'}">${pct}%</text>
     <text x="44" y="55" text-anchor="middle" class="cl" font-family="inherit">정상</text></svg>`;
+  /* 세그먼트 클릭 → 메인 그래프를 그 시간대(±1.5h)로 이동 + 홈 탭 */
+  el.querySelectorAll('.cseg').forEach(p=>{
+    p.addEventListener('click',()=>{
+      const hour=+p.dataset.hour;
+      const center=base+hour*3600000+1800000;               // 그 시(정각)+30분
+      const cIdx=(N-1)-(NOW-center)/300000;
+      mainChart.a=cIdx-18; mainChart.b=cIdx+18;              // 약 ±1.5시간 창
+      mainChart.selI=-1; mainChart.render();
+      document.querySelector('.tabbar button[data-scr="scr-home"]').click();
+    });
+  });
 }
 function renderClocks(){
-  /* 오늘(NOW 기준 자정~현재) 시간별 우세 구간 */
-  const today0=new Date(); today0.setHours(0,0,0,0); const t0=today0.getTime();
-  const buckets=Array.from({length:24},()=>({low:0,safe:0,high:0,n:0}));
-  for(let i=0;i<N;i++){ if(!alive(i))continue; const d=ptDate(data[i]);
-    if(d.getTime()<t0)continue; const h=d.getHours(); const z=zoneOf(data[i].v);
-    buckets[h][z]++; buckets[h].n++; }
-  function halfData(h0){
-    const hz=[]; let safe=0,tot=0;
-    for(let h=h0;h<h0+12;h++){ const b=buckets[h];
-      if(!b.n){ hz.push(null); continue; }
-      hz.push(b.low>=b.safe&&b.low>=b.high?'low':b.high>=b.safe?'high':'safe');
-      safe+=b.safe; tot+=b.n; }
-    return {hz, pct: tot?Math.round(100*safe/tot):0};
-  }
-  const am=halfData(0), pm=halfData(12);
-  drawClock(document.getElementById('clockAM'), am.hz, am.pct);
-  drawClock(document.getElementById('clockPM'), pm.hz, pm.pct);
+  drawClock(document.getElementById('clockAM'), 0);
+  drawClock(document.getElementById('clockPM'), 12);
 }
 
 /* ============ 홈 그래프 ============ */
@@ -802,7 +839,6 @@ const mainChart=zoomChart({
   afterEdit(){ renderClocks(); }
 });
 document.getElementById('greset').addEventListener('click',()=>mainChart.reset());
-renderClocks();
 
 /* ============ 기록: 일자별 ============ */
 const DAYS=(()=>{ const map=new Map();
@@ -842,7 +878,18 @@ function renderDay(){
 }
 dPrev.addEventListener('click',()=>{ if(dayIdx>0){dayIdx--; renderDay();} });
 dNext.addEventListener('click',()=>{ if(dayIdx<DAYS.length-1){dayIdx++; renderDay();} });
+
+/* 데모용: 기준일에 오전 저전류(빨강)·오후 고전류(주황) 구간 삽입 →
+ * 시계 색·탭 점프 시연 (실데이터면 자연 발생) */
+(function(){ const rd=DAYS[DAYS.length-2];
+  for(let i=rd.i0;i<=rd.i1;i++){ const h=ptDate(data[i]).getHours();
+    if(h>=9&&h<10)  data[i].v=Math.min(data[i].v,70+(i%5));    // 오전 9시 저전류
+    if(h>=16&&h<17) data[i].v=Math.max(data[i].v,255+(i%6));   // 오후 4시 고전류
+  }
+})();
+
 renderDay();
+renderClocks();   // DAYS 정의 이후 (시계가 기준일을 참조)
 
 /* ============ 주간 패턴 (AGP) ============ */
 function renderWeek(){
