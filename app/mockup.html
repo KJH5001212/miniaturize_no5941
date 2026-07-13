@@ -49,7 +49,7 @@ body {
 .wrap { max-width:1060px; margin:0 auto; padding:40px 20px 80px;
   display:flex; gap:44px; align-items:flex-start; flex-wrap:wrap; justify-content:center; }
 
-/* ============ 페이지 헤더/노트 ============ */
+/* ============ 설계 노트 ============ */
 .notes { flex:1 1 380px; max-width:520px; min-width:320px; }
 .notes h1 { font-size:26px; letter-spacing:-.02em; text-wrap:balance; }
 .notes .sub { color:var(--muted); margin:6px 0 26px; font-size:14.5px; }
@@ -70,124 +70,141 @@ body {
 .phone { width:392px; flex:0 0 auto; background:var(--surface); border-radius:38px;
   border:1px solid var(--hair); box-shadow:var(--shadow); overflow:hidden;
   display:flex; flex-direction:column; height:812px; position:sticky; top:24px; }
-.phone { position:sticky; }   /* 시트는 .phone 기준 absolute */
-.p-body { flex:1; overflow-y:auto; padding:0 18px 12px; scrollbar-width:thin; }
+.p-body { flex:1; overflow-y:auto; padding:0 16px 8px; scrollbar-width:thin; }
 
 /* 앱 상단바 */
-.appbar { display:flex; align-items:center; gap:8px; padding:20px 18px 12px; }
-.brand { font-size:20px; font-weight:800; letter-spacing:-.02em; }
+.appbar { display:flex; align-items:center; gap:8px; padding:16px 16px 10px; }
+.brand { font-size:19px; font-weight:800; letter-spacing:-.02em; }
 .brand small { color:var(--accent); }
-.chip { display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600;
-  border-radius:999px; padding:4px 10px; background:var(--surface2); color:var(--ink2); }
-.chip .dot { width:7px; height:7px; border-radius:50%; }
+.chip { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600;
+  border-radius:999px; padding:3px 9px; background:var(--surface2); color:var(--ink2); }
+.chip .dot { width:6px; height:6px; border-radius:50%; }
 .chip.ok .dot { background:var(--good); } .chip.ok { color:var(--good); background:var(--good-soft); }
 .spacer { flex:1; }
-/* 기기 상태 카드 (홈) — '기기 배터리' 명시로 폰 배터리와 혼동 차단 */
-.dev { display:flex; align-items:center; gap:14px; background:var(--surface2);
-  border-radius:16px; padding:12px 16px; margin-bottom:12px; }
-.dev .ic { width:38px; height:38px; border-radius:12px; background:var(--accent-soft);
+
+/* 기기 상태 카드 */
+.dev { display:flex; align-items:center; gap:12px; background:var(--surface2);
+  border-radius:14px; padding:9px 14px; margin-bottom:8px; }
+.dev .ic { width:34px; height:34px; border-radius:11px; background:var(--accent-soft);
   display:flex; align-items:center; justify-content:center; color:var(--accent); flex:0 0 auto; }
-.dev .tx b { font-size:14.5px; }
-.dev .tx .cap { margin-top:0; }
+.dev .tx b { font-size:13.5px; }
+.dev .tx .cap { margin-top:0; font-size:11px; }
 .dev .ring { margin-left:auto; text-align:center; }
 .dev .ring svg { display:block; margin:0 auto; }
-.dev .ring .pct { font-size:12px; font-weight:800; font-variant-numeric:tabular-nums; }
-.dev .ring .lab { font-size:9.5px; color:var(--muted); font-weight:700; letter-spacing:.04em;
+.dev .ring .lab { font-size:9px; color:var(--muted); font-weight:700; letter-spacing:.03em;
   white-space:nowrap; }
-.dev .tx .cap { font-size:11px; }
 
-/* 동기화 배너 */
-.sync { margin:4px 0 12px; background:var(--accent-soft); border:1px solid transparent;
-  border-radius:12px; padding:10px 14px; font-size:12.5px; color:var(--accent); font-weight:600; }
-.sync .bar { height:4px; border-radius:2px; background:var(--hair); margin-top:7px; overflow:hidden; }
+/* 동기화 슬림 배너 */
+.sync { display:flex; align-items:center; gap:10px; margin-bottom:8px;
+  background:var(--accent-soft); border-radius:11px; padding:7px 12px;
+  font-size:11.5px; color:var(--accent); font-weight:600; }
+.sync .bar { flex:1; height:4px; border-radius:2px; background:var(--hair); overflow:hidden; }
 .sync .bar i { display:block; height:100%; width:68%; background:var(--accent); border-radius:2px; }
 
-/* 히어로 판독 */
-.hero { background:var(--surface2); border-radius:20px; padding:22px 20px 18px; text-align:center; }
-.eyebrow { font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+/* 히어로 (컴팩트) */
+.hero { background:var(--surface2); border-radius:16px; padding:12px 16px 11px;
+  margin-bottom:8px; }
+.hero .top { display:flex; align-items:baseline; }
+.eyebrow { font-size:10.5px; font-weight:700; letter-spacing:.09em; text-transform:uppercase;
   color:var(--muted); }
-.reading { display:flex; align-items:baseline; justify-content:center; gap:8px; margin-top:6px; }
-.reading b { font-size:64px; font-weight:800; letter-spacing:-.03em; line-height:1;
+.hero .meta { margin-left:auto; font-size:11px; color:var(--muted);
   font-variant-numeric:tabular-nums; }
-.reading span { font-size:20px; font-weight:700; color:var(--muted); }
-.pill { display:inline-block; margin-top:12px; font-size:12px; font-weight:700;
-  border-radius:999px; padding:5px 12px; }
+.hero .mid { display:flex; align-items:center; gap:12px; margin-top:2px; }
+.reading { display:flex; align-items:baseline; gap:6px; }
+.reading b { font-size:44px; font-weight:800; letter-spacing:-.03em; line-height:1.1;
+  font-variant-numeric:tabular-nums; }
+.reading span { font-size:16px; font-weight:700; color:var(--muted); }
+.pill { font-size:11px; font-weight:700; border-radius:999px; padding:4px 10px; }
 .pill.good { background:var(--good-soft); color:var(--good); }
-.meta { margin-top:10px; font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; }
 
 /* 카드 공통 */
-.card { background:var(--surface2); border-radius:16px; padding:14px 16px; margin-top:12px; }
-.card h3 { font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
-  color:var(--muted); margin-bottom:8px; }
-.row { display:flex; gap:12px; }
-.row .card { flex:1; margin-top:12px; }
-.stat { font-size:22px; font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:-.01em; }
-.stat small { font-size:12px; font-weight:600; color:var(--muted); margin-left:2px; }
-.cap { font-size:11.5px; color:var(--muted); margin-top:2px; }
+.card { background:var(--surface2); border-radius:14px; padding:11px 14px; margin-bottom:8px; }
+.card h3 { font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+  color:var(--muted); margin-bottom:6px; }
+.cap { font-size:11px; color:var(--muted); margin-top:2px; }
+
+/* 통계 스트립 (1행 4칸) */
+.strip { display:flex; background:var(--surface2); border-radius:14px; padding:9px 4px; }
+.strip .cell { flex:1; text-align:center; border-left:1px solid var(--hair); }
+.strip .cell:first-child { border-left:none; }
+.strip .k { font-size:10px; font-weight:700; color:var(--muted); letter-spacing:.04em; }
+.strip .v { font-size:17px; font-weight:800; font-variant-numeric:tabular-nums; }
+.strip .v small { font-size:10.5px; color:var(--muted); font-weight:600; }
 
 /* 차트 */
 .chart-wrap { position:relative; }
 .chart-wrap svg { display:block; width:100%; height:auto; }
-#bigchart { touch-action:none; cursor:grab; }
+#bigchart, #daychart { touch-action:none; }
+#bigchart { cursor:grab; }
 #bigchart.dragging { cursor:grabbing; }
 .tip { position:absolute; pointer-events:none; background:var(--ink); color:var(--bg);
-  font-size:11.5px; font-weight:600; border-radius:8px; padding:6px 9px; white-space:nowrap;
+  font-size:11px; font-weight:600; border-radius:8px; padding:5px 8px; white-space:nowrap;
   transform:translate(-50%,-125%); opacity:0; transition:opacity .1s; z-index:2;
   font-variant-numeric:tabular-nums; }
 @media (prefers-reduced-motion: reduce) { .tip { transition:none; } }
 
 /* 그래프 툴바 */
-.gbar { display:flex; align-items:center; gap:10px; margin:4px 0 10px; }
-.gbar .span { font-size:12px; font-weight:700; color:var(--ink2);
+.gbar { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+.gbar .span { font-size:11.5px; font-weight:700; color:var(--ink2);
   font-variant-numeric:tabular-nums; }
-.gbar .hint { font-size:11px; color:var(--muted); }
-.gbar .reset { margin-left:auto; border:1px solid var(--hair); background:var(--surface2);
-  color:var(--accent); font:inherit; font-size:12px; font-weight:700; border-radius:9px;
-  padding:6px 12px; cursor:pointer; }
+.gbar .hint { font-size:10px; color:var(--muted); }
+.gbar .reset { margin-left:auto; border:1px solid var(--hair); background:var(--surface);
+  color:var(--accent); font:inherit; font-size:11px; font-weight:700; border-radius:8px;
+  padding:4px 10px; cursor:pointer; }
 .gbar .reset:focus-visible { outline:2px solid var(--accent); }
 
-/* 기록 리스트 */
-.day { font-size:11.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
-  color:var(--muted); margin:18px 2px 6px; }
-.log { background:var(--surface2); border-radius:14px; overflow:hidden; }
-.log .item { display:flex; align-items:center; gap:12px; padding:12px 14px;
-  border-top:1px solid var(--hair); font-size:13.5px; }
-.log .item:first-child { border-top:none; }
-.log .t { color:var(--muted); font-size:12px; font-variant-numeric:tabular-nums; width:44px; }
-.log .v { font-weight:800; font-variant-numeric:tabular-nums; }
-.log .v small { font-weight:600; color:var(--muted); }
-.log .g { margin-left:auto; font-size:11px; color:var(--muted); font-weight:600; }
-.ev { display:flex; gap:10px; align-items:center; padding:12px 14px; border-radius:14px;
-  margin-top:8px; font-size:12.5px; font-weight:600; }
+/* 기록: 일자 네비게이션 */
+.datenav { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.datenav .arrow { width:34px; height:34px; border-radius:10px; border:1px solid var(--hair);
+  background:var(--surface2); color:var(--ink2); font-size:16px; font-weight:800;
+  cursor:pointer; }
+.datenav .arrow:disabled { opacity:.3; cursor:default; }
+.datenav .arrow:focus-visible { outline:2px solid var(--accent); }
+.datenav .date { flex:1; text-align:center; font-size:14.5px; font-weight:800; }
+.datenav .date .cap { margin-top:-2px; }
+.srv { display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:700;
+  color:var(--accent); background:var(--accent-soft); border-radius:999px; padding:3px 9px; }
+.ev { display:flex; gap:9px; align-items:center; padding:9px 12px; border-radius:12px;
+  margin-bottom:6px; font-size:12px; font-weight:600; }
 .ev.warn { background:var(--warn-soft); color:var(--warn); }
 .ev.info { background:var(--accent-soft); color:var(--accent); }
 
-/* 설정 */
-.set { background:var(--surface2); border-radius:14px; margin-top:12px; overflow:hidden; }
-.set .head { padding:12px 16px 4px; font-size:12px; font-weight:700; letter-spacing:.06em;
+/* 설정 (계정 중심) */
+.acct { display:flex; align-items:center; gap:13px; background:var(--surface2);
+  border-radius:16px; padding:14px 16px; margin-bottom:10px; }
+.acct .avatar { width:46px; height:46px; border-radius:50%; background:var(--accent);
+  color:#fff; display:flex; align-items:center; justify-content:center;
+  font-size:18px; font-weight:800; flex:0 0 auto; }
+.acct b { font-size:15px; }
+.acct .cap { margin-top:0; }
+.acct .badge { margin-left:auto; font-size:10.5px; font-weight:700; color:var(--good);
+  background:var(--good-soft); border-radius:999px; padding:4px 10px; white-space:nowrap; }
+.set { background:var(--surface2); border-radius:14px; margin-bottom:10px; overflow:hidden; }
+.set .head { padding:10px 16px 2px; font-size:11px; font-weight:700; letter-spacing:.05em;
   text-transform:uppercase; color:var(--muted); }
-.set .item { display:flex; align-items:center; padding:12px 16px; gap:10px;
-  border-top:1px solid var(--hair); font-size:14px; }
+.set .item { display:flex; align-items:center; padding:11px 16px; gap:10px;
+  border-top:1px solid var(--hair); font-size:13.5px; }
 .set .item:nth-child(2) { border-top:none; }
 .set .item .lab { flex:1; }
-.set .item .lab .cap { margin-top:1px; }
-.set .val { color:var(--muted); font-weight:600; font-size:13.5px; font-variant-numeric:tabular-nums; }
-.toggle { width:44px; height:26px; border-radius:13px; background:var(--hair); border:0;
+.set .val { color:var(--muted); font-weight:600; font-size:12.5px;
+  font-variant-numeric:tabular-nums; }
+.set .chev { color:var(--muted); font-weight:800; }
+.toggle { width:42px; height:25px; border-radius:13px; background:var(--hair); border:0;
   position:relative; cursor:pointer; transition:background .15s; flex:0 0 auto; }
-.toggle::after { content:""; position:absolute; top:3px; left:3px; width:20px; height:20px;
+.toggle::after { content:""; position:absolute; top:3px; left:3px; width:19px; height:19px;
   border-radius:50%; background:var(--surface); box-shadow:0 1px 3px rgba(0,0,0,.25);
   transition:left .15s; }
 .toggle[aria-checked="true"] { background:var(--accent); }
-.toggle[aria-checked="true"]::after { left:21px; }
+.toggle[aria-checked="true"]::after { left:20px; }
 .toggle:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
 @media (prefers-reduced-motion: reduce) { .toggle, .toggle::after { transition:none; } }
-.btn { display:block; width:100%; border:0; font:inherit; font-weight:700; font-size:14px;
-  padding:13px; border-radius:12px; cursor:pointer; margin-top:10px;
+.btn { display:block; width:100%; border:0; font:inherit; font-weight:700; font-size:13.5px;
+  padding:12px; border-radius:12px; cursor:pointer; margin-bottom:8px;
   background:var(--accent); color:#fff; }
 .btn.ghost { background:var(--surface2); color:var(--accent); }
 .btn.danger { background:transparent; color:var(--crit); }
 
-/* QR 스캔 시트 (목업) */
+/* QR 스캔 시트 */
 .sheet-bg { position:absolute; inset:0; background:rgba(10,20,22,.45); z-index:5;
   display:none; align-items:flex-end; }
 .sheet-bg.on { display:flex; }
@@ -195,24 +212,24 @@ body {
   padding:20px 20px 26px; }
 .sheet h4 { font-size:15px; margin-bottom:4px; }
 .sheet .cap { margin-bottom:14px; }
-.qrbox { position:relative; height:150px; border-radius:14px; background:var(--surface2);
-  display:flex; align-items:center; justify-content:center; margin-bottom:14px;
+.qrbox { position:relative; height:140px; border-radius:14px; background:var(--surface2);
+  display:flex; align-items:center; justify-content:center; margin-bottom:12px;
   border:1.5px dashed var(--hair); color:var(--muted); overflow:hidden; }
-.qrbox .frame { position:absolute; inset:26px 96px; border:2px solid var(--accent);
+.qrbox .frame { position:absolute; inset:24px 96px; border:2px solid var(--accent);
   border-radius:10px; opacity:.85; }
 .qres { display:none; background:var(--good-soft); color:var(--good); border-radius:12px;
-  padding:11px 14px; font-size:13px; font-weight:700; margin-bottom:12px; }
+  padding:10px 14px; font-size:12.5px; font-weight:700; margin-bottom:12px; }
 .qres.on { display:block; }
 .qres .cap { color:var(--good); opacity:.8; font-weight:600; }
 .sheet .row2 { display:flex; gap:10px; }
-.sheet .row2 .btn { flex:1; margin-top:0; }
+.sheet .row2 .btn { flex:1; margin-bottom:0; }
 
 /* 하단 탭바 */
 .tabbar { display:flex; border-top:1px solid var(--hair); background:var(--surface);
-  padding:8px 6px calc(8px + env(safe-area-inset-bottom)); }
+  padding:7px 6px calc(7px + env(safe-area-inset-bottom)); }
 .tabbar button { flex:1; border:0; background:none; color:var(--muted); font:inherit;
   font-size:10.5px; font-weight:700; cursor:pointer; display:flex; flex-direction:column;
-  align-items:center; gap:3px; padding:6px 0; border-radius:10px; }
+  align-items:center; gap:3px; padding:5px 0; border-radius:10px; }
 .tabbar button svg { display:block; }
 .tabbar button[aria-selected="true"] { color:var(--accent); }
 .tabbar button:focus-visible { outline:2px solid var(--accent); }
@@ -233,11 +250,11 @@ body {
 
   <div class="p-body">
 
-    <!-- ===== 홈 ===== -->
+    <!-- ===== 홈 (원스크린) ===== -->
     <section class="screen on" id="scr-home">
       <div class="dev">
         <div class="ic">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
             <rect x="4" y="2.5" width="12" height="15" rx="3" stroke="currentColor" stroke-width="1.7"/>
             <path d="M8 17.5 V19 M12 17.5 V19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
             <path d="M7.5 10 h2 l1.2-3 1.6 6 1.2-3 h1" stroke="currentColor" stroke-width="1.5"
@@ -247,107 +264,126 @@ body {
         <div class="tx"><b>pstat</b>
           <div class="cap">연결됨 · 패드 밖 · 전극 1일차</div></div>
         <div class="ring" title="측정기 배터리 (폰 아님)">
-          <svg width="44" height="44" viewBox="0 0 44 44" aria-label="기기 배터리 82%">
+          <svg width="38" height="38" viewBox="0 0 44 44" aria-label="기기 배터리 82%">
             <circle cx="22" cy="22" r="17" fill="none" stroke="var(--hair)" stroke-width="4.5"/>
             <circle cx="22" cy="22" r="17" fill="none" stroke="var(--good)" stroke-width="4.5"
-              stroke-linecap="round" stroke-dasharray="87.6 106.8"
-              transform="rotate(-90 22 22)"/>
+              stroke-linecap="round" stroke-dasharray="87.6 106.8" transform="rotate(-90 22 22)"/>
             <text x="22" y="26" text-anchor="middle" font-size="11" font-weight="800"
               fill="var(--ink)" font-family="inherit">82</text>
           </svg>
           <div class="lab">기기 배터리</div>
         </div>
       </div>
-      <div class="sync">밀린 측정 214개 동기화 중 · 68%
-        <div class="bar"><i></i></div>
-      </div>
+
+      <div class="sync">동기화 214개 · 68%<div class="bar"><i></i></div></div>
 
       <div class="hero">
-        <div class="eyebrow">현재 전류</div>
-        <div class="reading"><b id="nowVal">142.3</b><span>nA</span></div>
-        <div><span class="pill good">목표 범위 내 · 80–240 nA</span></div>
-        <div class="meta">3분 전 · 게인 G1 · 요약 모드</div>
+        <div class="top">
+          <span class="eyebrow">현재 전류</span>
+          <span class="meta">3분 전 · G1 · 요약 모드</span>
+        </div>
+        <div class="mid">
+          <div class="reading"><b id="nowVal">142.3</b><span>nA</span></div>
+          <span class="pill good">목표 범위 내<br>80–240 nA</span>
+        </div>
       </div>
 
-      <div class="card">
-        <div class="gbar" style="margin:0 0 8px">
+      <div class="card" style="margin-bottom:8px">
+        <div class="gbar">
           <span class="span" id="gspan">최근 12시간</span>
+          <span class="hint">끌기·핀치·점탭</span>
           <button class="reset" id="greset">초기화</button>
         </div>
         <div class="chart-wrap" id="bigchart"></div>
-        <div class="cap" style="margin-top:6px">끌기=이동 · 핀치/휠=확대 · 점 탭=수치</div>
       </div>
 
-      <div class="row">
-        <div class="card"><h3>평균</h3><div class="stat" id="stAvg">158<small>nA</small></div></div>
-        <div class="card"><h3>최저</h3><div class="stat" id="stMin">121<small>nA</small></div></div>
-        <div class="card"><h3>최고</h3><div class="stat" id="stMax">213<small>nA</small></div></div>
-      </div>
-      <div class="card"><h3>목표 범위 내 시간 (표시 구간)</h3>
-        <div class="stat" id="stIn">94<small>%</small></div>
-        <div class="cap">목표 80–240 nA · 측정 <span id="stN">144</span>회</div>
+      <div class="strip">
+        <div class="cell"><div class="k">평균</div><div class="v" id="stAvg">158<small> nA</small></div></div>
+        <div class="cell"><div class="k">최저</div><div class="v" id="stMin">121<small> nA</small></div></div>
+        <div class="cell"><div class="k">최고</div><div class="v" id="stMax">213<small> nA</small></div></div>
+        <div class="cell"><div class="k">범위 내</div><div class="v" id="stIn">94<small> %</small></div></div>
       </div>
     </section>
 
-    <!-- ===== 기록 ===== -->
+    <!-- ===== 기록: 서버 일자별 조회 ===== -->
     <section class="screen" id="scr-log">
-      <div class="ev warn">⚠ 14:20–15:05 데이터 유실 구간 (저장공간 초과 · gap)</div>
-      <div class="day">오늘</div>
-      <div class="log" id="logToday"></div>
-      <div class="ev info">✓ 10:12 스케일 캘리브레이션 완료 (1 MΩ 더미셀 · scale 1.013)</div>
-      <div class="ev warn">⟳ 09:30 전극 교체 (QR: E-2406-087) — 제로 보정 완료</div>
-      <div class="day">어제</div>
-      <div class="log" id="logYest"></div>
+      <div class="datenav">
+        <button class="arrow" id="dPrev" aria-label="이전 날">‹</button>
+        <div class="date"><span id="dLabel">2026년 7월 12일 (일)</span>
+          <div class="cap" id="dSub">서버에서 불러옴 · 288개 측정</div></div>
+        <button class="arrow" id="dNext" aria-label="다음 날">›</button>
+      </div>
+
+      <div class="card">
+        <div class="gbar" style="margin-bottom:4px">
+          <span class="span">하루 전체 (00–24시)</span>
+          <span class="srv" id="srvTag">☁ 서버</span>
+        </div>
+        <div class="chart-wrap" id="daychart"></div>
+      </div>
+
+      <div class="strip" style="margin-bottom:8px">
+        <div class="cell"><div class="k">평균</div><div class="v" id="dAvg">—</div></div>
+        <div class="cell"><div class="k">최저</div><div class="v" id="dMin">—</div></div>
+        <div class="cell"><div class="k">최고</div><div class="v" id="dMax">—</div></div>
+        <div class="cell"><div class="k">범위 내</div><div class="v" id="dIn">—</div></div>
+      </div>
+
+      <div id="dEvents"></div>
     </section>
 
-    <!-- ===== 설정 ===== -->
+    <!-- ===== 설정: 계정/서비스 ===== -->
     <section class="screen" id="scr-set">
+      <div class="acct">
+        <div class="avatar">주</div>
+        <div><b>주현</b>
+          <div class="cap">juhyun4280@gmail.com</div></div>
+        <span class="badge">Google 로그인</span>
+      </div>
+
       <div class="set">
-        <div class="head">측정</div>
-        <div class="item"><div class="lab">모드</div><div class="val">사이클 · 5초 / 5분</div></div>
-        <div class="item"><div class="lab">샘플레이트</div><div class="val">10 Hz</div></div>
+        <div class="head">데이터</div>
         <div class="item">
-          <div class="lab">요약 모드 (agg)
-            <div class="cap">사이클당 적분 기울기 1점만 저장 — 배터리·저장공간 절약</div></div>
-          <button class="toggle" role="switch" aria-checked="true" aria-label="요약 모드"></button>
+          <div class="lab">서버 자동 업로드<div class="cap">측정 동기화 즉시 클라우드 백업</div></div>
+          <button class="toggle" role="switch" aria-checked="true" aria-label="서버 자동 업로드"></button>
         </div>
+        <div class="item"><div class="lab">마지막 업로드</div><div class="val">5분 전 · 214개</div></div>
         <div class="item">
-          <div class="lab">오토레인지<div class="cap">게인 자동 전환 (G0–G2)</div></div>
-          <button class="toggle" role="switch" aria-checked="true" aria-label="오토레인지"></button>
+          <div class="lab">Wi-Fi에서만 업로드</div>
+          <button class="toggle" role="switch" aria-checked="false" aria-label="Wi-Fi에서만"></button>
         </div>
       </div>
 
       <div class="set">
-        <div class="head">하드웨어</div>
-        <div class="item"><div class="lab">RF (TIA 저항)</div><div class="val">2.0 MΩ</div></div>
-        <div class="item"><div class="lab">오버샘플링</div><div class="val">64×</div></div>
+        <div class="head">알림</div>
+        <div class="item">
+          <div class="lab">목표 범위 이탈</div>
+          <button class="toggle" role="switch" aria-checked="true" aria-label="범위 이탈 알림"></button>
+        </div>
+        <div class="item">
+          <div class="lab">기기 배터리 부족</div>
+          <button class="toggle" role="switch" aria-checked="true" aria-label="배터리 알림"></button>
+        </div>
+        <div class="item">
+          <div class="lab">전극 교체 임박 (7일)</div>
+          <button class="toggle" role="switch" aria-checked="false" aria-label="전극 알림"></button>
+        </div>
       </div>
 
       <div class="set">
         <div class="head">전극</div>
         <div class="item"><div class="lab">현재 전극
-          <div class="cap" id="elecNow">E-2406-087 · 로트 L19 · 유효기한 2026-12</div></div></div>
-        <div class="item"><div class="lab">마지막 교체
-          <div class="cap" id="elecWhen">어제 09:30 · 1일 경과</div></div></div>
+          <div class="cap" id="elecNow">E-2406-087 · 로트 L19 · 1일 경과</div></div></div>
       </div>
       <button class="btn" id="qrBtn">전극 QR 스캔 — 교체 자동 등록</button>
-      <button class="btn ghost">수동으로 교체 기록 (QR 훼손 시)</button>
 
       <div class="set">
-        <div class="head">캘리브레이션</div>
-        <div class="item"><div class="lab">마지막 보정
-          <div class="cap">7월 10일 · scale 1.013 · 오프셋 −2.1 nA</div></div></div>
+        <div class="item" style="border-top:none"><div class="lab">측정 상세 설정
+          <div class="cap">모드 · 레이트 · 요약 · 캘리브레이션 · 기기 정보</div></div>
+          <span class="chev">›</span></div>
       </div>
-      <button class="btn ghost">제로 보정 (전극 개방 상태에서)</button>
-      <button class="btn ghost">스케일 보정 (더미셀 연결 후)</button>
 
-      <div class="set">
-        <div class="head">기기</div>
-        <div class="item"><div class="lab">펌웨어</div><div class="val">pstat v1.2.0</div></div>
-        <div class="item"><div class="lab">배터리 전압</div><div class="val">3.92 V</div></div>
-        <div class="item"><div class="lab">저장 대기 (fpend)</div><div class="val">214 샘플</div></div>
-      </div>
-      <button class="btn danger">기기 연결 해제</button>
+      <button class="btn danger">로그아웃</button>
     </section>
   </div>
 
@@ -372,61 +408,60 @@ body {
     <button role="tab" aria-selected="true" data-scr="scr-home">
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M3.5 9.5 L11 3 L18.5 9.5 V18 a1 1 0 0 1 -1 1 H4.5 a1 1 0 0 1 -1 -1 Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>홈</button>
     <button role="tab" aria-selected="false" data-scr="scr-log">
-      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><rect x="4" y="3" width="14" height="16" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 8 H14 M8 12 H14 M8 16 H11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>기록</button>
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><rect x="3" y="4.5" width="16" height="14.5" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 9 H19 M7 2.5 V6 M15 2.5 V6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>기록</button>
     <button role="tab" aria-selected="false" data-scr="scr-set">
-      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M11 2.5 V5 M11 17 V19.5 M2.5 11 H5 M17 11 H19.5 M5 5 L6.8 6.8 M15.2 15.2 L17 17 M17 5 L15.2 6.8 M6.8 15.2 L5 17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>설정</button>
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><circle cx="11" cy="8" r="3.5" stroke="currentColor" stroke-width="1.8"/><path d="M4 19 c0-3.6 3.1-5.8 7-5.8 s7 2.2 7 5.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>계정</button>
   </nav>
 </div>
 
 <!-- ==================== 설계 노트 ==================== -->
 <div class="notes">
-  <h1>Ampero — 웨어러블 포텐쇼스탯 전용 앱 <span style="color:var(--accent)">목업 v0.6</span></h1>
-  <p class="sub">상용 CGM 앱 문법 그대로, 표기만 전류(nA). 홈 그래프에서
-  <b>끌어서 과거로 이동, 핀치(또는 휠)로 확대·축소, 점을 탭하면 정확한 수치</b>가 떠.
-  탭은 홈/기록/설정 3개. 화면 구성 확정 후 Kotlin(Compose)으로 한 번에 빌드.</p>
+  <h1>Ampero — 웨어러블 포텐쇼스탯 전용 앱 <span style="color:var(--accent)">목업 v0.7</span></h1>
+  <p class="sub">상용 CGM 앱 문법 그대로, 표기만 전류(nA). 홈은 <b>스크롤 없는 원스크린</b>,
+  기록은 <b>서버 일자별 조회</b>, 설정은 <b>계정/서비스 중심</b>. 화면 확정 후
+  Kotlin(Compose)으로 한 번에 빌드.</p>
 
   <div class="note-card">
-    <h2>v0.3–0.6 변경 (피드백 반영)</h2>
+    <h2>v0.7 변경 (피드백 반영)</h2>
     <ul>
-      <li><b>그래프 탭 삭제 → 홈에 통합</b>: 홈의 스파크라인 자리가 팬/줌/점탭/전극마커/
-        초기화가 전부 되는 메인 그래프로 승격. 통계 타일(평균·최저·최고·범위내%)은
-        표시 구간 기준. 탭은 홈/기록/설정 3개</li>
-      <li><b>전극 QR 등록</b>: 설정→전극 "QR 스캔" 버튼 → 스캔 시트(목업 데모 동작)
-        → 전극 ID·로트·유효기한 자동 등록 + 교체 시점 기록. 수동 기록은 QR 훼손 시 폴백</li>
-      <li><b>전극 교체 마커</b>: 그래프에 세로 점선+태그 (데모: 26시간 전 / 5일 전).
-        기록 탭 이벤트·홈 기기 카드(전극 ID·경과일)와 연동</li>
-      <li><b>기기 배터리 분리 표기</b>: 상단바에서 제거 → 홈의 기기 카드에
-        링 게이지 + "기기 배터리" 라벨 명시 (폰 배터리와 혼동 차단)</li>
-      <li>x축: 확대 정도 따라 30분/1/3/6/12h/1d/2d 정시 눈금 자동 선택</li>
-      <li>점+선 동시 표시(64점 이하) · 드래그 팬 · 핀치/휠 줌 · 점 탭=수치 · 초기화</li>
+      <li><b>홈 원스크린</b>: 히어로 축소·동기화 슬림화·통계 1행 스트립 — 812px 안에
+        스크롤 없이 전부 (그래프 팬/줌/점탭/마커/초기화는 그대로)</li>
+      <li><b>기록 = 서버 일자별 조회</b>: ‹ 날짜 › 네비게이션 → 그 날 00–24시 하루치
+        그래프를 서버에서 로드(데모: 7일 보관), 일 통계 + 그날 이벤트(전극 교체 등)</li>
+      <li><b>설정 = 계정/서비스</b>: Google 로그인 프로필 · 서버 자동 업로드/마지막
+        업로드 · 알림 3종 · 전극 QR. 기기/펌웨어 디테일은 "측정 상세 설정 ›" 하위로 격하</li>
     </ul>
+  </div>
+
+  <div class="note-card">
+    <h2>서버 연동 설계 (앱 빌드 시)</h2>
+    <table>
+      <tr><td>POST /sync</td><td>동기화된 샘플 업로드 (자동 업로드 ON 시 즉시)</td></tr>
+      <tr><td>GET /days/{date}</td><td>기록 탭 하루치 (샘플+이벤트) — 로컬 7일 캐시, 그 이전은 서버만</td></tr>
+      <tr><td>POST /electrodes</td><td>QR 등록 (ID·로트·유효기한) → 교체 이벤트 서버 보존</td></tr>
+      <tr><td>OAuth</td><td>Google/Apple 로그인 — 기기·데이터가 계정에 귀속</td></tr>
+    </table>
   </div>
 
   <div class="note-card">
     <h2>펌웨어 ↔ UI 매핑</h2>
     <table>
-      <tr><td>d[[…]]</td><td>홈 판독값·스파크라인·그래프 (agg 모드 = 사이클당 1점)</td></tr>
-      <tr><td>vbat</td><td>상단 배터리 % (전압→% 룩업), 설정→기기</td></tr>
-      <tr><td>qi + chg</td><td>충전 배너: 패드 밖 / 충전 중 / 완충</td></tr>
-      <tr><td>fpend</td><td>홈 상단 동기화 배너 + 진행률</td></tr>
-      <tr><td>gap</td><td>기록 탭 "데이터 유실 구간" 경고</td></tr>
-      <tr><td>lb</td><td>저전압 경고 배너 + 측정 시작 차단 안내</td></tr>
-      <tr><td>rf / os / agg</td><td>설정 → 하드웨어·측정 (config 명령 전송)</td></tr>
-      <tr><td>zero / cal</td><td>설정 → 캘리브레이션 버튼 2개</td></tr>
-      <tr><td>(QR/앱)</td><td>전극 ID·로트·유효기한 등록 + 교체 이벤트 — 그래프 마커·기록·경과일</td></tr>
+      <tr><td>d[[…]]</td><td>홈 판독값·그래프 (agg 모드 = 사이클당 1점)</td></tr>
+      <tr><td>vbat</td><td>기기 카드 배터리 링 (전압→% 룩업)</td></tr>
+      <tr><td>qi + chg</td><td>기기 카드: 패드 밖 / 충전 중 / 완충</td></tr>
+      <tr><td>fpend</td><td>동기화 슬림 배너 + 진행률</td></tr>
+      <tr><td>gap</td><td>기록 탭 해당 일자의 "유실 구간" 이벤트</td></tr>
+      <tr><td>lb</td><td>저전압 경고 + 측정 시작 차단 안내</td></tr>
+      <tr><td>rf / os / agg</td><td>"측정 상세 설정 ›" 하위 화면</td></tr>
     </table>
   </div>
 
   <div class="note-card">
     <h2>남은 질문</h2>
     <ul>
-      <li>목표 범위 80–240 nA 기본값 — 사용자 편집 UI 넣을까?</li>
-      <li>나중 농도 환산(nA → 대상 단위) 계수 입력 자리 예약?</li>
-      <li>알림 정책: 범위 이탈 / 배터리 / 동기화 완료 푸시</li>
-      <li>QR 등록 직후 제로/스케일 보정 플로우 자동 안내할까? (시트 문구에는 예고만 해둠)</li>
-      <li>QR 페이로드 규격: ID·로트·유효기한 외에 <b>로트별 보정계수</b>(스케일 프리셋)도 넣을까?
-        — 넣으면 더미셀 보정 없이 교체 가능</li>
-      <li>전극 수명(예: 7일) 설정해서 "교체 임박" 알림 줄까?</li>
+      <li>QR 페이로드에 로트별 보정계수 포함? (스캔만으로 보정 완료)</li>
+      <li>서버 보관 기간 / 로컬 캐시 기간 (데모: 7일)</li>
+      <li>목표 범위(80–240 nA) 사용자 편집 UI</li>
     </ul>
   </div>
 </div>
@@ -444,27 +479,24 @@ for (let i=0;i<N;i++){
   const v = base + (R()-0.5)*5;
   data.push({ t:i*5, v:Math.max(60,v), g: v>180?2:1 });
 }
-const nowV = data[N-1].v;
-document.getElementById('nowVal').textContent = nowV.toFixed(1);
+document.getElementById('nowVal').textContent = data[N-1].v.toFixed(1);
 
-/* ============ 공통 ============ */
 const BAND_LO = 80, BAND_HI = 240;
 const NOW = Date.now();
 function ptDate(p){ return new Date(NOW - ((N-1)*5 - p.t)*60000); }
 function fmtHM(d){ return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
 function fmtMDHM(d){ return `${d.getMonth()+1}/${d.getDate()} ${fmtHM(d)}`; }
 
-/* 전극 교체 이벤트 (앱 로컬 기록 — 데모: 26시간 전 / 5일 전) */
+/* 전극 교체 이벤트 (데모: 26시간 전 / 5일 전) */
 const EVENTS=[
-  {i:N-1-26*12,  label:'전극 교체'},
-  {i:N-1-120*12, label:'전극 교체'},
+  {i:N-1-26*12,  label:'전극 교체', id:'E-2406-087'},
+  {i:N-1-120*12, label:'전극 교체', id:'E-2406-051'},
 ];
 
-/* ============ 메인 그래프: 팬/줌/점선택 ============ */
+/* ============ 홈 메인 그래프: 팬/줌/점선택 ============ */
 const G = { el:document.getElementById('bigchart'),
-  W:352, H:230, P:{l:36,r:14,t:12,b:22},
-  a:N-145, b:N-1,          /* 표시 창 [a,b] (실수 인덱스) — 기본 12h */
-  DEF:[N-145, N-1], MIN_SPAN:12, sel:-1 };
+  W:352, H:196, P:{l:34,r:12,t:12,b:20},
+  a:N-145, b:N-1, DEF:[N-145, N-1], MIN_SPAN:12, sel:-1 };
 
 function gClamp(){
   const span = G.b - G.a;
@@ -472,6 +504,18 @@ function gClamp(){
   if (span > N-1){ G.a=0; G.b=N-1; }
   if (G.a < 0){ G.b-=G.a; G.a=0; }
   if (G.b > N-1){ G.a-=(G.b-(N-1)); G.b=N-1; if(G.a<0)G.a=0; }
+}
+/* 공통 SVG 조각 생성 */
+function chartSvg(pts, i0, X, Y, lo, hi, W, H, P, opt){
+  let grid='',lbl='';
+  const step=(hi-lo)>220?100:50;
+  for(let gv=Math.ceil(lo/step)*step; gv<hi; gv+=step){
+    grid+=`<line x1="${P.l}" x2="${W-P.r}" y1="${Y(gv)}" y2="${Y(gv)}" stroke="var(--hair)" stroke-width="1"/>`;
+    lbl+=`<text x="${P.l-6}" y="${Y(gv)+3.5}" text-anchor="end" font-size="9.5" fill="var(--muted)" font-family="inherit">${gv}</text>`;
+  }
+  let line='';
+  pts.forEach((p,k)=>{ line+=`${k?'L':'M'}${X(i0+k).toFixed(1)} ${Y(p.v).toFixed(1)} `; });
+  return {grid,lbl,line};
 }
 function gRender(){
   gClamp();
@@ -483,15 +527,9 @@ function gRender(){
   const X=idx=>P.l+(W-P.l-P.r)*(idx-G.a)/(G.b-G.a);
   const Y=v=>P.t+(H-P.t-P.b)*(1-(v-lo)/(hi-lo));
   G.X=X; G.Y=Y; G.i0=i0; G.i1=i1;
+  const {grid,lbl,line}=chartSvg(pts,i0,X,Y,lo,hi,W,H,P);
 
-  let grid='',lbl='';
-  const step=(hi-lo)>220?100:50;
-  for(let gv=Math.ceil(lo/step)*step; gv<hi; gv+=step){
-    grid+=`<line x1="${P.l}" x2="${W-P.r}" y1="${Y(gv)}" y2="${Y(gv)}" stroke="var(--hair)" stroke-width="1"/>`;
-    lbl+=`<text x="${P.l-6}" y="${Y(gv)+3.5}" text-anchor="end" font-size="9.5" fill="var(--muted)" font-family="inherit">${gv}</text>`;
-  }
-
-  /* x축 눈금: 확대 정도에 따라 30분/1h/3h/6h/12h/1d/2d 정시 간격 자동 선택 */
+  /* x축 눈금: 확대 정도에 따라 30분/1h/3h/6h/12h/1d/2d 정시 간격 */
   const spanMin=(G.b-G.a)*5;
   const LADDER=[30,60,180,360,720,1440,2880];
   let ivl=LADDER[LADDER.length-1];
@@ -500,13 +538,11 @@ function gRender(){
   const Ta=timeOf(G.a), Tb=timeOf(G.b);
   const da=new Date(Ta);
   const mid=new Date(da.getFullYear(),da.getMonth(),da.getDate()).getTime();
-  const mins=(Ta-mid)/60000;
-  let tick=mid+Math.ceil(mins/ivl)*ivl*60000;
+  let tick=mid+Math.ceil((Ta-mid)/60000/ivl)*ivl*60000;
   let xt='';
   for(; tick<=Tb; tick+=ivl*60000){
-    const idx=(N-1)-(NOW-tick)/300000;
-    const x=X(idx);
-    if(x<P.l+16||x>W-P.r-16) continue;   /* 모서리 라벨 겹침 방지 */
+    const x=X((N-1)-(NOW-tick)/300000);
+    if(x<P.l+16||x>W-P.r-16) continue;
     const td=new Date(tick);
     const txt=ivl>=1440 ? `${td.getMonth()+1}/${td.getDate()}` : fmtHM(td);
     xt+=`<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${P.t}" y2="${H-P.b}"
@@ -514,18 +550,8 @@ function gRender(){
       <text x="${x.toFixed(1)}" y="${H-6}" text-anchor="middle" font-size="9.5"
       fill="var(--muted)" font-family="inherit">${txt}</text>`;
   }
-  let line='';
-  for(let i=i0;i<=i1;i++){ line+=`${i===i0?'M':'L'}${X(i).toFixed(1)} ${Y(data[i].v).toFixed(1)} `; }
-  /* 점: 표시 개수 ≤64 일 때만 (축소 시 선만 — 겹침 방지) */
-  let dots='';
-  const showDots=(i1-i0+1)<=64;
-  if(showDots){
-    for(let i=i0;i<=i1;i++){
-      dots+=`<circle cx="${X(i).toFixed(1)}" cy="${Y(data[i].v).toFixed(1)}" r="3"
-        fill="var(--accent)" stroke="var(--surface2)" stroke-width="1.5"/>`;
-    }
-  }
-  /* 전극 교체 마커: 세로 실선 + 상단 태그 */
+
+  /* 전극 교체 마커 */
   let evm='';
   for(const ev of EVENTS){
     if(ev.i<G.a||ev.i>G.b) continue;
@@ -537,6 +563,14 @@ function gRender(){
       font-weight="700" fill="var(--warn)" font-family="inherit">전극 교체</text>`;
   }
 
+  let dots='';
+  const showDots=(i1-i0+1)<=64;
+  if(showDots){
+    for(let i=i0;i<=i1;i++){
+      dots+=`<circle cx="${X(i).toFixed(1)}" cy="${Y(data[i].v).toFixed(1)}" r="3"
+        fill="var(--accent)" stroke="var(--surface2)" stroke-width="1.5"/>`;
+    }
+  }
   let selDot='';
   if(G.sel>=i0&&G.sel<=i1){
     selDot=`<circle cx="${X(G.sel).toFixed(1)}" cy="${Y(data[G.sel].v).toFixed(1)}" r="5.5"
@@ -544,7 +578,6 @@ function gRender(){
       <line x1="${X(G.sel).toFixed(1)}" x2="${X(G.sel).toFixed(1)}" y1="${P.t}" y2="${H-P.b}"
       stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 3"/>`;
   }
-  const spanH=(G.b-G.a)*5/60;
   G.el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="전류 추이 (끌기·핀치·탭 가능)">
     <rect x="${P.l}" y="${Y(BAND_HI)}" width="${W-P.l-P.r}" height="${Y(BAND_LO)-Y(BAND_HI)}"
       fill="var(--band)" rx="3"/>
@@ -554,7 +587,6 @@ function gRender(){
     ${dots}${selDot}
   </svg><div class="tip" role="status"></div>`;
 
-  /* 고정 툴팁 (선택 점) */
   const tip=G.el.querySelector('.tip');
   if(G.sel>=i0&&G.sel<=i1){
     const p=data[G.sel];
@@ -564,7 +596,7 @@ function gRender(){
     tip.style.opacity=1;
   }
 
-  /* 툴바·통계 */
+  const spanH=(G.b-G.a)*5/60;
   gspan.textContent = spanH>=48?`${(spanH/24).toFixed(1)}일 표시`:
                       spanH>=1?`${spanH.toFixed(1)}시간 표시`:`${Math.round(spanH*60)}분 표시`;
   const inb=vs.filter(v=>v>=BAND_LO&&v<=BAND_HI).length;
@@ -572,17 +604,13 @@ function gRender(){
   stMin.firstChild.textContent=Math.round(Math.min(...vs));
   stMax.firstChild.textContent=Math.round(Math.max(...vs));
   stIn.firstChild.textContent=Math.round(100*inb/vs.length);
-  stN.textContent=vs.length;
 }
 
-/* ---- 제스처: 드래그 팬 · 핀치/휠 줌 · 탭 선택 ----
- * 리스너는 영속 컨테이너(#bigchart)에 1회만 바인딩 — 렌더 때 svg 가
- * 새로 만들어져도 포인터 캡처가 끊기지 않는다. */
+/* ---- 제스처 (영속 컨테이너에 1회 바인딩) ---- */
 (function(){
   const box=G.el;
   const ptrs=new Map();
   let start=null;
-  /* 화면 px → 데이터 인덱스 (svg 는 컨테이너 폭에 맞춰 렌더됨) */
   function pxToIdx(clientX,a,b){
     const r=box.getBoundingClientRect();
     const sx=(clientX-r.left)/r.width*G.W;
@@ -594,8 +622,7 @@ function gRender(){
     if(ptrs.size===1){ start={x:e.clientX,a:G.a,b:G.b,moved:false,t:Date.now()}; }
     else if(ptrs.size===2){
       const [p1,p2]=[...ptrs.values()];
-      start={dist:Math.max(20,Math.abs(p1.x-p2.x)),a:G.a,b:G.b,
-             cx:(p1.x+p2.x)/2,moved:true};
+      start={dist:Math.max(20,Math.abs(p1.x-p2.x)),a:G.a,b:G.b,cx:(p1.x+p2.x)/2,moved:true};
     }
     box.classList.add('dragging');
   });
@@ -608,10 +635,7 @@ function gRender(){
     if(ptrs.size===1){
       const dx=e.clientX-start.x;
       if(Math.abs(dx)>5)start.moved=true;
-      if(start.moved){
-        G.a=start.a-dx*idxPerPx; G.b=start.b-dx*idxPerPx;
-        gRender();
-      }
+      if(start.moved){ G.a=start.a-dx*idxPerPx; G.b=start.b-dx*idxPerPx; gRender(); }
     } else if(ptrs.size===2){
       const [p1,p2]=[...ptrs.values()];
       const nd=Math.max(20,Math.abs(p1.x-p2.x));
@@ -624,7 +648,6 @@ function gRender(){
   });
   function up(e){
     if(start&&ptrs.size===1&&!start.moved&&(Date.now()-start.t)<500){
-      /* 탭 → 가장 가까운 점 선택 (반경 22px), 같은 점 다시 탭 = 해제 */
       const r=box.getBoundingClientRect();
       const sx=(e.clientX-r.left)/r.width*G.W, sy=(e.clientY-r.top)/r.height*G.H;
       let best=-1,bd=22;
@@ -637,7 +660,7 @@ function gRender(){
     }
     ptrs.delete(e.pointerId);
     if(ptrs.size===0){ start=null; box.classList.remove('dragging'); }
-    else if(ptrs.size===1){       /* 핀치 → 한 손가락: 팬으로 전환 */
+    else if(ptrs.size===1){
       const p=[...ptrs.values()][0];
       start={x:p.x,a:G.a,b:G.b,moved:true,t:Date.now()};
     }
@@ -657,18 +680,95 @@ document.getElementById('greset').addEventListener('click',()=>{
 });
 gRender();
 
-/* ============ 기록 리스트 ============ */
-function logRows(el, rows){
-  el.innerHTML = rows.map(r=>`<div class="item"><span class="t">${r[0]}</span>
-    <span class="v">${r[1]} <small>nA</small></span><span class="g">G${r[2]} · 요약</span></div>`).join('');
-}
-logRows(document.getElementById('logToday'), [
-  ['16:05','141.8',1],['16:00','142.6',1],['15:55','144.1',1],['15:50','143.0',1],
-  ['15:45','146.9',1],['15:40','149.2',1]]);
-logRows(document.getElementById('logYest'), [
-  ['23:55','171.3',1],['23:50','170.8',1],['23:45','173.5',1],['23:40','177.0',2]]);
+/* ============ 기록: 서버 일자별 조회 (데모 = 로컬 7일) ============ */
+const DAYS=(()=>{                      /* 데이터에 존재하는 로컬 날짜들 (과거→최근) */
+  const map=new Map();
+  data.forEach((p,i)=>{
+    const d=ptDate(p);
+    const key=`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    if(!map.has(key)) map.set(key,{d:new Date(d.getFullYear(),d.getMonth(),d.getDate()),i0:i,i1:i});
+    map.get(key).i1=i;
+  });
+  return [...map.values()];
+})();
+let dayIdx=DAYS.length-2;              /* 데모: 어제부터 */
+const WD=['일','월','화','수','목','금','토'];
 
-/* ============ 탭 전환 / 토글 ============ */
+function renderDay(){
+  const day=DAYS[dayIdx];
+  const pts=data.slice(day.i0,day.i1+1);
+  dLabel.textContent=`${day.d.getFullYear()}년 ${day.d.getMonth()+1}월 ${day.d.getDate()}일 (${WD[day.d.getDay()]})`;
+  dSub.textContent=`서버에서 불러옴 · ${pts.length}개 측정`;
+  dPrev.disabled=(dayIdx===0);
+  dNext.disabled=(dayIdx===DAYS.length-1);
+
+  /* 00–24시 고정축 하루 그래프 */
+  const W=352,H=170,P={l:34,r:12,t:10,b:20};
+  const vs=pts.map(p=>p.v);
+  const lo=Math.min(BAND_LO-15,Math.min(...vs)-8), hi=Math.max(BAND_HI+15,Math.max(...vs)+8);
+  const dayT0=day.d.getTime();
+  const Xt=t=>P.l+(W-P.l-P.r)*Math.min(1,Math.max(0,(t-dayT0)/86400000));
+  const Y=v=>P.t+(H-P.t-P.b)*(1-(v-lo)/(hi-lo));
+  let grid='',lbl='';
+  const step=(hi-lo)>220?100:50;
+  for(let gv=Math.ceil(lo/step)*step; gv<hi; gv+=step){
+    grid+=`<line x1="${P.l}" x2="${W-P.r}" y1="${Y(gv)}" y2="${Y(gv)}" stroke="var(--hair)" stroke-width="1"/>`;
+    lbl+=`<text x="${P.l-6}" y="${Y(gv)+3.5}" text-anchor="end" font-size="9.5" fill="var(--muted)" font-family="inherit">${gv}</text>`;
+  }
+  let xt='';
+  for(let h=0;h<=24;h+=6){
+    const x=P.l+(W-P.l-P.r)*h/24;
+    xt+=`<line x1="${x}" x2="${x}" y1="${P.t}" y2="${H-P.b}" stroke="var(--hair)" stroke-width="1"/>
+      <text x="${x}" y="${H-6}" text-anchor="middle" font-size="9.5" fill="var(--muted)"
+      font-family="inherit">${String(h).padStart(2,'0')}시</text>`;
+  }
+  let line='';
+  pts.forEach((p,k)=>{ line+=`${k?'L':'M'}${Xt(ptDate(p).getTime()).toFixed(1)} ${Y(p.v).toFixed(1)} `; });
+  let evm='';
+  for(const ev of EVENTS){
+    const t=ptDate(data[ev.i]).getTime();
+    if(t<dayT0||t>=dayT0+86400000) continue;
+    const x=Xt(t);
+    evm+=`<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${P.t+11}" y2="${H-P.b}"
+      stroke="var(--warn)" stroke-width="1.6" stroke-dasharray="5 3"/>
+      <rect x="${(x-26).toFixed(1)}" y="${P.t-2}" width="52" height="13" rx="6.5" fill="var(--warn-soft)"/>
+      <text x="${x.toFixed(1)}" y="${P.t+8}" text-anchor="middle" font-size="8.5"
+      font-weight="700" fill="var(--warn)" font-family="inherit">전극 교체</text>`;
+  }
+  document.getElementById('daychart').innerHTML=
+    `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="하루치 전류 그래프">
+    <rect x="${P.l}" y="${Y(BAND_HI)}" width="${W-P.l-P.r}" height="${Y(BAND_LO)-Y(BAND_HI)}"
+      fill="var(--band)" rx="3"/>
+    ${grid}${lbl}${xt}${evm}
+    <path d="${line}" fill="none" stroke="var(--accent)" stroke-width="1.8"
+      stroke-linejoin="round" stroke-linecap="round"/>
+  </svg>`;
+
+  const inb=vs.filter(v=>v>=BAND_LO&&v<=BAND_HI).length;
+  dAvg.innerHTML=`${Math.round(vs.reduce((a,b)=>a+b)/vs.length)}<small> nA</small>`;
+  dMin.innerHTML=`${Math.round(Math.min(...vs))}<small> nA</small>`;
+  dMax.innerHTML=`${Math.round(Math.max(...vs))}<small> nA</small>`;
+  dIn.innerHTML=`${Math.round(100*inb/vs.length)}<small> %</small>`;
+
+  /* 그날 이벤트 */
+  let ev='';
+  for(const e of EVENTS){
+    const t=ptDate(data[e.i]);
+    if(t.getTime()>=dayT0&&t.getTime()<dayT0+86400000){
+      ev+=`<div class="ev warn">⟳ ${fmtHM(t)} 전극 교체 (QR: ${e.id}) — 제로 보정 완료</div>`;
+    }
+  }
+  if(dayIdx===DAYS.length-3){
+    ev+=`<div class="ev warn">⚠ 14:20–15:05 데이터 유실 구간 (gap)</div>`;
+  }
+  if(!ev) ev=`<div class="ev info">이 날짜에 이벤트 없음</div>`;
+  document.getElementById('dEvents').innerHTML=ev;
+}
+dPrev.addEventListener('click',()=>{ if(dayIdx>0){dayIdx--; renderDay();} });
+dNext.addEventListener('click',()=>{ if(dayIdx<DAYS.length-1){dayIdx++; renderDay();} });
+renderDay();
+
+/* ============ 탭 / 토글 / QR 시트 ============ */
 document.querySelectorAll('.tabbar button').forEach(b=>{
   b.addEventListener('click',()=>{
     document.querySelectorAll('.tabbar button').forEach(x=>x.setAttribute('aria-selected','false'));
@@ -677,7 +777,10 @@ document.querySelectorAll('.tabbar button').forEach(b=>{
     document.getElementById(b.dataset.scr).classList.add('on');
   });
 });
-/* QR 스캔 시트 (목업: 1.2초 후 스캔 성공 연출) */
+document.querySelectorAll('.toggle').forEach(t=>{
+  t.addEventListener('click',()=>t.setAttribute('aria-checked',
+    t.getAttribute('aria-checked')==='true'?'false':'true'));
+});
 (function(){
   const bg=document.getElementById('sheetBg'), res=document.getElementById('qrRes'),
         ok=document.getElementById('qrOk'), msg=document.getElementById('qrMsg');
@@ -693,13 +796,7 @@ document.querySelectorAll('.tabbar button').forEach(b=>{
   });
   ok.addEventListener('click',()=>{
     bg.classList.remove('on');
-    document.getElementById('elecNow').textContent='E-2407-113 · 로트 L23 · 유효기한 2027-01';
-    document.getElementById('elecWhen').textContent='방금 · 0일 경과';
+    document.getElementById('elecNow').textContent='E-2407-113 · 로트 L23 · 방금 교체';
   });
 })();
-
-document.querySelectorAll('.toggle').forEach(t=>{
-  t.addEventListener('click',()=>t.setAttribute('aria-checked',
-    t.getAttribute('aria-checked')==='true'?'false':'true'));
-});
 </script>
