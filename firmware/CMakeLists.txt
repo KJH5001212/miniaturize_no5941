@@ -12,5 +12,6 @@ target_sources(app PRIVATE
 	src/meas.c                 # SAADC 측정 엔진 + AFE 전원 + 배터리
 	src/store.c                # rf/os/cal NVM 영속화 (settings)
 	src/databuf.c              # 무손실 데이터 버퍼 (AD5941 버전 재사용)
+	src/flog.c                 # 플래시 오프라인 백로그 (웨어러블 동기화)
 	src/cmd.c                  # JSON 명령 파서 (rf/os/zero/cal 확장)
 )

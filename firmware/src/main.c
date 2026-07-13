@@ -35,6 +35,7 @@
 #include "meas.h"
 #include "store.h"
 #include "databuf.h"
+#include "flog.h"
 #include "cmd.h"
 
 LOG_MODULE_REGISTER(pstat, LOG_LEVEL_INF);
@@ -493,6 +494,17 @@ static void nus_received(struct bt_conn *conn, const uint8_t *data, uint16_t len
 
 	switch (c.type) {
 	case CMD_ACK:
+		/* 플래시 백로그 재생중엔 ack 가 그 배치를 가리킴 — 해제는
+		 * 메인루프가 수행 (플래시 접근은 메인루프 전용) */
+		if (fl_wait && c.ack_seq == fl_wait_seq) {
+			fl_acked = true;
+			break;
+		}
+		if (fl_wait || flog_pending() > 0) {
+			/* 재생중 도착한 기타 ack: 옛 세션 seq 가 라이브 seq 와
+			 * 겹칠 수 있으므로 RAM 에 적용 금지 (미수신분 오해제 방지) */
+			break;
+		}
 		databuf_ack(c.ack_seq);
 		break;
 	case CMD_STOP:
@@ -579,10 +591,39 @@ static int tx_nus(const uint8_t *data, uint16_t len)
 /* ===================== 데이터/상태 전송 ===================== */
 #define BATCH_MAX   5
 #define DRAIN_ITERS 8
+#define FL_ACK_TICKS 100   /* 플래시 배치 ack 대기 2s (20ms tick) — 초과 시 재전송 */
+
+/* 플래시 백로그 재생 상태 (stop-and-wait: 배치 ack 후 다음 배치) */
+static volatile bool     fl_wait;      /* 배치 전송 후 ack 대기중 */
+static volatile bool     fl_acked;     /* BLE 스레드가 ack 수신 표시 */
+static volatile uint32_t fl_wait_seq;  /* 대기중 배치의 마지막 seq */
+static uint32_t          fl_wait_n;
+static uint32_t          fl_wait_tick;
+
+/* 샘플 배치 → {"d":[...]} 전송. 0=성공 */
+static int send_batch(const struct pstat_sample *b, uint32_t k)
+{
+	static char dline[256];
+	int o = snprintk(dline, sizeof(dline), "{\"d\":[");
+	for (uint32_t i = 0; i < k; i++) {
+		size_t rem = (o < (int)sizeof(dline)) ? sizeof(dline) - o : 0;
+		o += snprintk(dline + o, rem, "%s[%u,%u,%.3f,%u]",
+			i ? "," : "", b[i].seq, b[i].t_ms,
+			(double)b[i].current_nA, b[i].range_idx);
+	}
+	{
+		size_t rem = (o < (int)sizeof(dline)) ? sizeof(dline) - o : 0;
+		o += snprintk(dline + o, rem, "]}\n");
+	}
+	if (o >= (int)sizeof(dline)) {
+		return -EMSGSIZE;
+	}
+	return tx_nus(dline, o);
+}
 
 static void tx_status(void)
 {
-	char line[224];
+	char line[256];
 	const char *st = "idle";
 	uint8_t mode;
 	uint16_t rate;
@@ -605,11 +646,13 @@ static void tx_status(void)
 	int n = snprintk(line, sizeof(line),
 		"{\"st\":\"%s\",\"mode\":%u,\"rate\":%u,\"cyc\":%u,\"range\":%d,"
 		"\"pend\":%u,\"buf\":%u,\"gap\":%d,"
-		"\"vbat\":%d,\"chg\":%d,\"qi\":%d,\"lb\":%d,\"rf\":%u,\"os\":%u}\n",
+		"\"vbat\":%d,\"chg\":%d,\"qi\":%d,\"lb\":%d,\"rf\":%u,\"os\":%u,"
+		"\"fpend\":%u}\n",
 		st, mode, rate, run_cycle, cur_range,
-		databuf_pending(), databuf_unacked(), (int)databuf_gap(),
+		databuf_pending(), databuf_unacked(),
+		(int)(databuf_gap() || flog_gap()),
 		g_vbat_mv, (int)meas_charging(), (int)meas_qi_present(),
-		(int)low_batt, rf, os);
+		(int)low_batt, rf, os, flog_pending());
 	tx_nus(line, n);
 }
 
@@ -660,11 +703,11 @@ int main(void)
 	bt_nus_init(&nus_cb);
 	start_advertising();
 	battery_check();
+	flog_init();   /* 플래시 백로그 복원 (실패해도 RAM 전용으로 계속 동작) */
 	LOG_INF("ready. rf=%u os=%u scale=%.4f vbat=%dmV",
 		g_cfg.rf_ohm, g_cfg.oversample, (double)g_cal.scale, g_vbat_mv);
 
 	uint32_t tick = 0;
-	char line[256];
 	struct pstat_sample batch[BATCH_MAX];
 
 	while (1) {
@@ -681,40 +724,76 @@ int main(void)
 		}
 
 		if (!current_conn || !notif_enabled) {
+			fl_wait = false;    /* 재연결하면 백로그 tail 부터 다시 */
+			fl_acked = false;
+			/* 오프라인: RAM 링 → 플래시 백로그 이동 (웨어러블 핵심 경로).
+			 * 옮긴 만큼 RAM 에서 해제 → RAM 은 짧은 대기실 역할만 */
+			for (int it = 0; it < DRAIN_ITERS; it++) {
+				uint32_t base;
+				uint32_t k = databuf_peek_batch(batch, BATCH_MAX, &base);
+				if (k == 0) {
+					break;
+				}
+				uint32_t ok = 0;
+				while (ok < k && flog_push(&batch[ok]) == 0) {
+					ok++;
+				}
+				if (ok > 0) {
+					databuf_commit_sent(base, ok);
+					databuf_ack(base + ok - 1);
+				}
+				if (ok < k) {
+					break;   /* 플래시 사용불가 → RAM 링 유지(기존 동작) */
+				}
+			}
 			if ((tick % 250) == 0) {
-				LOG_INF("alive up=%us state=%ld pend=%u buf=%u vbat=%d conn=%d",
+				LOG_INF("alive up=%us state=%ld fpend=%u buf=%u vbat=%d conn=%d",
 					k_uptime_get_32() / 1000U, atomic_get(&g_state),
-					databuf_pending(), databuf_unacked(),
+					flog_pending(), databuf_unacked(),
 					g_vbat_mv, current_conn ? 1 : 0);
 			}
 			continue;
 		}
 
-		/* 데이터 드레인 (무손실: 전송 성공한 배치만 절대위치 commit) */
-		for (int it = 0; it < DRAIN_ITERS; it++) {
-			uint32_t base;
-			uint32_t k = databuf_peek_batch(batch, BATCH_MAX, &base);
+		/* 연결됨: 플래시 백로그 먼저 재생 — 오래된 데이터부터 순서 보존.
+		 * stop-and-wait: 배치 ack 확인 후 다음 배치 (ack 유실 시 재전송,
+		 * 중복은 앱 파서가 seq 로 걸러냄). 그동안 라이브는 RAM 에 쌓임. */
+		if (fl_wait) {
+			if (fl_acked) {
+				flog_free_batch(fl_wait_n);
+				fl_wait = false;
+				fl_acked = false;
+			} else if ((uint32_t)(tick - fl_wait_tick) > FL_ACK_TICKS) {
+				fl_wait = false;   /* 타임아웃 → 같은 배치 재전송 */
+			}
+		}
+		if (!fl_wait && flog_pending() > 0) {
+			uint32_t k = flog_peek_batch(batch, BATCH_MAX);
 			if (k == 0) {
-				break;
+				flog_free_batch(1);   /* 손상 레코드 스킵 (livelock 방지) */
+			} else if (send_batch(batch, k) == 0) {
+				fl_wait = true;
+				fl_acked = false;
+				fl_wait_seq = batch[k - 1].seq;
+				fl_wait_n = k;
+				fl_wait_tick = tick;
 			}
-			int o = snprintk(line, sizeof(line), "{\"d\":[");
-			for (uint32_t i = 0; i < k; i++) {
-				size_t rem = (o < (int)sizeof(line)) ? sizeof(line) - o : 0;
-				o += snprintk(line + o, rem, "%s[%u,%u,%.3f,%u]",
-					i ? "," : "", batch[i].seq, batch[i].t_ms,
-					(double)batch[i].current_nA, batch[i].range_idx);
-			}
-			{
-				size_t rem = (o < (int)sizeof(line)) ? sizeof(line) - o : 0;
-				o += snprintk(line + o, rem, "]}\n");
-			}
-			if (o >= (int)sizeof(line)) {
-				continue;
-			}
-			if (tx_nus(line, o) == 0) {
-				databuf_commit_sent(base, k);
-			} else {
-				break;
+		}
+
+		/* 라이브 드레인 (무손실: 전송 성공한 배치만 절대위치 commit).
+		 * 플래시 백로그가 다 빠진 뒤에만 — seq 순서 보존 */
+		if (!fl_wait && flog_pending() == 0) {
+			for (int it = 0; it < DRAIN_ITERS; it++) {
+				uint32_t base;
+				uint32_t k = databuf_peek_batch(batch, BATCH_MAX, &base);
+				if (k == 0) {
+					break;
+				}
+				if (send_batch(batch, k) == 0) {
+					databuf_commit_sent(base, k);
+				} else {
+					break;
+				}
 			}
 		}
 
