@@ -150,6 +150,9 @@ bool cmd_parse(const char *json, size_t len, struct cmd *out,
 		if (jint(buf, "range", &v)) {
 			out->cfg.range_idx = (uint8_t)CLAMP(v, 0, GAIN_N - 1);
 		}
+		if (jint(buf, "agg", &v)) {
+			out->cfg.agg = (v != 0);
+		}
 		/* --- 하드웨어 파라미터 (지정 시 NVM 저장 플래그) --- */
 		if (jint(buf, "rf", &v)) {
 			out->cfg.rf_ohm = (uint32_t)CLAMP(v, 10000, 100000000);

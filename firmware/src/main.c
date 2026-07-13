@@ -207,6 +207,19 @@ static void measure_phase(uint32_t dur_ms)
 	uint32_t t0 = k_uptime_get_32();
 	struct pstat_sample smp;
 
+	/* 요약(agg) 모드: raw 를 버리고 측정구간당 1샘플만 남긴다.
+	 * Q(t)=∫I·dt (사다리꼴) 를 구간 후반 50% 에서 선형회귀 →
+	 * 기울기 = 노이즈에 견고한 정상상태 전류 [nA] (끝값의 강건 버전).
+	 * 구간 길이를 알아야 하므로 CYCLE/TIMED 전용 (dur_ms=0 이면 raw). */
+	bool agg = rc.agg && dur_ms;
+	float  q = 0.0f, prev_i = 0.0f;
+	uint32_t prev_t = 0;
+	bool   have_prev = false;
+	double st = 0, st2 = 0, sq = 0, stq = 0;
+	uint32_t n = 0;
+	uint32_t phase0 = t0 - run_t0;        /* smp.t_ms 기준 구간 시작 */
+	uint32_t fit_from = dur_ms / 2;       /* 후반 50% 만 피팅 (과도응답 제외) */
+
 	next_due = t0 + 1000U / rc.rate_hz;
 
 	while (!stop_req) {
@@ -216,6 +229,36 @@ static void measure_phase(uint32_t dur_ms)
 		if (!sample_once(&smp)) {
 			break;
 		}
+		if (!agg) {
+			databuf_push(&smp);
+			continue;
+		}
+		if (have_prev) {
+			q += 0.5f * (smp.current_nA + prev_i) *
+			     (float)(smp.t_ms - prev_t) * 1e-3f;   /* [nA·s] */
+		}
+		prev_i = smp.current_nA;
+		prev_t = smp.t_ms;
+		have_prev = true;
+
+		uint32_t ph_ms = smp.t_ms - phase0;
+		if (ph_ms >= fit_from) {
+			double ts = (double)(ph_ms - fit_from) * 1e-3;
+			st  += ts;
+			st2 += ts * ts;
+			sq  += q;
+			stq += ts * q;
+			n++;
+		}
+	}
+
+	if (agg && n >= 2) {
+		double den = (double)n * st2 - st * st;
+		/* 회귀 불능(구간 극단·중단)이면 마지막 전류로 폴백 */
+		smp.current_nA = (den > 1e-12) ?
+			(float)(((double)n * stq - st * sq) / den) : prev_i;
+		smp.t_ms = k_uptime_get_32() - run_t0;
+		/* smp.range_idx = 마지막 게인 그대로 */
 		databuf_push(&smp);
 	}
 }
@@ -638,23 +681,25 @@ static void tx_status(void)
 	} else if (s == PSTAT_CYCLE_REST) {
 		st = "rest";
 	}
+	uint8_t agg;
 	k_mutex_lock(&cfg_lock, K_FOREVER);
 	mode = rc.mode;
 	rate = rc.rate_hz;
 	rf   = g_cfg.rf_ohm;
 	os   = g_cfg.oversample;
+	agg  = g_cfg.agg;
 	k_mutex_unlock(&cfg_lock);
 
 	int n = snprintk(line, sizeof(line),
 		"{\"st\":\"%s\",\"mode\":%u,\"rate\":%u,\"cyc\":%u,\"range\":%d,"
 		"\"pend\":%u,\"buf\":%u,\"gap\":%d,"
 		"\"vbat\":%d,\"chg\":%d,\"qi\":%d,\"lb\":%d,\"rf\":%u,\"os\":%u,"
-		"\"fpend\":%u}\n",
+		"\"fpend\":%u,\"agg\":%u}\n",
 		st, mode, rate, run_cycle, cur_range,
 		databuf_pending(), databuf_unacked(),
 		(int)(databuf_gap() || flog_gap()),
 		g_vbat_mv, (int)meas_charging(), (int)meas_qi_present(),
-		(int)low_batt, rf, os, flog_pending());
+		(int)low_batt, rf, os, flog_pending(), agg);
 	tx_nus(line, n);
 }
 

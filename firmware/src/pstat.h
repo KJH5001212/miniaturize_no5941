@@ -40,6 +40,9 @@ struct pstat_config {
 	uint32_t on_s;       /* CYCLE: 측정 구간 */
 	uint32_t off_s;      /* CYCLE: 대기 구간 */
 	uint32_t cycles;     /* CYCLE: 반복 횟수 (0=무한) */
+	uint8_t  agg;        /* 1=요약 모드: 측정구간 후반부 Q(t)=∫I·dt 선형회귀
+	                      * 기울기(=정상상태 전류) 1샘플만 저장/전송 (raw 폐기).
+	                      * CYCLE/TIMED 전용 — CONTINUOUS 는 무시(raw) */
 	/* --- 하드웨어 파라미터 (RF/CF 교체 시 앱에서 변경, NVM 저장) --- */
 	uint32_t rf_ohm;     /* TIA 피드백 저항 [Ω] (기본 1M, 5.1M/10M 교체 가능) */
 	uint16_t oversample; /* SAADC 하드웨어 오버샘플 1/2/4/…/256 (2^n 으로 반올림) */
