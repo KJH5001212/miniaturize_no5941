@@ -99,9 +99,6 @@ body {
 .reading b { font-size:64px; font-weight:800; letter-spacing:-.03em; line-height:1;
   font-variant-numeric:tabular-nums; }
 .reading span { font-size:20px; font-weight:700; color:var(--muted); }
-.trend { display:inline-flex; align-items:center; gap:7px; margin-top:10px; font-size:13.5px;
-  font-weight:700; color:var(--ink2); }
-.trend svg { display:block; }
 .pill { display:inline-block; margin-top:12px; font-size:12px; font-weight:700;
   border-radius:999px; padding:5px 12px; }
 .pill.good { background:var(--good-soft); color:var(--good); }
@@ -120,17 +117,23 @@ body {
 /* 차트 */
 .chart-wrap { position:relative; }
 .chart-wrap svg { display:block; width:100%; height:auto; }
+#bigchart { touch-action:none; cursor:grab; }
+#bigchart.dragging { cursor:grabbing; }
 .tip { position:absolute; pointer-events:none; background:var(--ink); color:var(--bg);
   font-size:11.5px; font-weight:600; border-radius:8px; padding:6px 9px; white-space:nowrap;
-  transform:translate(-50%,-115%); opacity:0; transition:opacity .1s;
+  transform:translate(-50%,-125%); opacity:0; transition:opacity .1s; z-index:2;
   font-variant-numeric:tabular-nums; }
 @media (prefers-reduced-motion: reduce) { .tip { transition:none; } }
-.seg { display:flex; background:var(--surface2); border-radius:10px; padding:3px; gap:2px; margin:4px 0 12px; }
-.seg button { flex:1; border:0; background:transparent; color:var(--muted); font:inherit;
-  font-size:12.5px; font-weight:700; padding:7px 0; border-radius:8px; cursor:pointer; }
-.seg button[aria-pressed="true"] { background:var(--surface); color:var(--ink);
-  box-shadow:0 1px 4px rgba(0,0,0,.12); }
-.seg button:focus-visible { outline:2px solid var(--accent); }
+
+/* 그래프 툴바 */
+.gbar { display:flex; align-items:center; gap:10px; margin:4px 0 10px; }
+.gbar .span { font-size:12px; font-weight:700; color:var(--ink2);
+  font-variant-numeric:tabular-nums; }
+.gbar .hint { font-size:11px; color:var(--muted); }
+.gbar .reset { margin-left:auto; border:1px solid var(--hair); background:var(--surface2);
+  color:var(--accent); font:inherit; font-size:12px; font-weight:700; border-radius:9px;
+  padding:6px 12px; cursor:pointer; }
+.gbar .reset:focus-visible { outline:2px solid var(--accent); }
 
 /* 기록 리스트 */
 .day { font-size:11.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
@@ -215,12 +218,6 @@ body {
       <div class="hero">
         <div class="eyebrow">현재 전류</div>
         <div class="reading"><b id="nowVal">142.3</b><span>nA</span></div>
-        <div class="trend" id="nowTrend">
-          <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
-            <path d="M3 10 H17 M12 5 L17 10 L12 15" stroke="var(--accent)" stroke-width="2.4"
-              fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>안정
-        </div>
         <div><span class="pill good">목표 범위 내 · 80–240 nA</span></div>
         <div class="meta">3분 전 · 게인 G1 · 요약 모드</div>
       </div>
@@ -231,20 +228,19 @@ body {
       </div>
 
       <div class="row">
-        <div class="card"><h3>다음 측정</h3><div class="stat" id="cd">03:47</div>
-          <div class="cap">사이클 5초 / 5분</div></div>
-        <div class="card"><h3>오늘 평균</h3><div class="stat">156<small>nA</small></div>
-          <div class="cap">범위 내 94%</div></div>
+        <div class="card"><h3>오늘 평균</h3><div class="stat" id="dayAvg">156<small>nA</small></div>
+          <div class="cap">측정 <span id="dayN">193</span>회</div></div>
+        <div class="card"><h3>오늘 범위 내</h3><div class="stat" id="dayIn">94<small>%</small></div>
+          <div class="cap">목표 80–240 nA</div></div>
       </div>
     </section>
 
     <!-- ===== 그래프 ===== -->
     <section class="screen" id="scr-graph">
-      <div class="seg" role="tablist" aria-label="기간">
-        <button aria-pressed="false" data-h="3">3시간</button>
-        <button aria-pressed="true"  data-h="12">12시간</button>
-        <button aria-pressed="false" data-h="24">24시간</button>
-        <button aria-pressed="false" data-h="168">7일</button>
+      <div class="gbar">
+        <span class="span" id="gspan">최근 12시간</span>
+        <span class="hint">끌기=이동 · 핀치/휠=확대 · 점 탭=수치</span>
+        <button class="reset" id="greset">초기화</button>
       </div>
       <div class="card" style="margin-top:0">
         <div class="chart-wrap" id="bigchart"></div>
@@ -254,7 +250,7 @@ body {
         <div class="card"><h3>최저</h3><div class="stat" id="stMin">121<small>nA</small></div></div>
         <div class="card"><h3>최고</h3><div class="stat" id="stMax">213<small>nA</small></div></div>
       </div>
-      <div class="card"><h3>목표 범위 내 시간</h3>
+      <div class="card"><h3>목표 범위 내 시간 (표시 구간)</h3>
         <div class="stat" id="stIn">94<small>%</small></div>
         <div class="cap">목표 80–240 nA · 측정 <span id="stN">144</span>회</div>
       </div>
@@ -326,9 +322,21 @@ body {
 
 <!-- ==================== 설계 노트 ==================== -->
 <div class="notes">
-  <h1>Ampero — 웨어러블 포텐쇼스탯 전용 앱 <span style="color:var(--accent)">목업 v0.1</span></h1>
-  <p class="sub">상용 CGM(연속혈당) 앱 문법 그대로, 표기만 전류(nA). 왼쪽 폰에서 탭·그래프·설정을
-  직접 눌러볼 수 있어. 이 화면 구성이 확정되면 Kotlin(Compose)으로 실제 앱을 빌드한다.</p>
+  <h1>Ampero — 웨어러블 포텐쇼스탯 전용 앱 <span style="color:var(--accent)">목업 v0.2</span></h1>
+  <p class="sub">상용 CGM 앱 문법 그대로, 표기만 전류(nA). 그래프 탭에서
+  <b>끌어서 과거로 이동, 핀치(또는 휠)로 확대·축소, 점을 탭하면 정확한 수치</b>가 떠.
+  화면 구성 확정 후 Kotlin(Compose)으로 한 번에 빌드.</p>
+
+  <div class="note-card">
+    <h2>v0.2 변경 (피드백 반영)</h2>
+    <ul>
+      <li>메인 그래프: <b>점+선</b> 동시 표시 (확대해서 점이 64개 이하일 때 점 표시 — 축소 시 선만)</li>
+      <li><b>제스처</b>: 드래그 팬 · 핀치/휠 줌 · 점 탭 → 고정 툴팁(시각·nA·게인) · <b>초기화</b> 버튼</li>
+      <li>기간 세그먼트(3h/12h/24h/7d) 제거 — 제스처로 대체, 기본 뷰 12시간</li>
+      <li>추세 화살표 제거 · "다음 측정" 카운트다운 제거</li>
+      <li>통계 타일은 현재 표시 구간 기준으로 실시간 갱신</li>
+    </ul>
+  </div>
 
   <div class="note-card">
     <h2>펌웨어 ↔ UI 매핑</h2>
@@ -345,139 +353,233 @@ body {
   </div>
 
   <div class="note-card">
-    <h2>다듬을 후보 — 피드백 주면 반영</h2>
+    <h2>남은 질문</h2>
     <ul>
-      <li>앱 이름/로고 (지금은 가칭 "Ampero")</li>
-      <li>목표 범위 기본값 80–240 nA — 센서 확정 후 조정, 사용자 편집 UI 여부</li>
-      <li>추세 화살표 기준 (지금: 최근 30분 기울기 ±10%/h)</li>
-      <li>홈의 "다음 측정" 카운트다운 필요 여부</li>
-      <li>단위 전환 준비 (nA → 추후 농도 환산 계수 입력란?)</li>
+      <li>목표 범위 80–240 nA 기본값 — 사용자 편집 UI 넣을까?</li>
+      <li>나중 농도 환산(nA → 대상 단위) 계수 입력 자리 예약?</li>
       <li>알림 정책: 범위 이탈 / 배터리 / 동기화 완료 푸시</li>
     </ul>
-  </div>
-
-  <div class="note-card">
-    <h2>다음 단계</h2>
-    <p>① 이 목업에서 화면·문구·색 확정 → ② Kotlin + Jetpack Compose 프로젝트 생성
-    (기존 BLE 계층 <code>BleManager</code>/<code>PstatParser</code> 재사용) → ③ 한 번에 빌드.
-    라이트/다크 모두 이 팔레트로 검증 완료(CVD·대비 통과).</p>
   </div>
 </div>
 </div>
 
 <script>
-/* ============ 데모 데이터 (결정적 PRNG — 새로고침해도 동일) ============ */
+/* ============ 데모 데이터 (결정적 PRNG — 7일치, 5분 간격 agg 샘플) ============ */
 function rng(seed){ return function(){ seed=(seed*1103515245+12345)&0x7fffffff; return seed/0x7fffffff; }; }
 const R = rng(42);
-const N = 288;                       // 24h × 5분 간격 (agg 모드: 사이클당 1점)
-const data = [];                     // {t(분, 0=24h전), v(nA), g(게인)}
-let base = 205;
+const N = 2016;                      // 7일 × 288
+const data = [];                     // {t(분, 0=7일전), v(nA), g(게인)}
+let base = 232;
 for (let i=0;i<N;i++){
-  base += (R()-0.5)*2.2 - 0.18 + 3.2*Math.sin(i/34)*0.08;
+  base += (R()-0.5)*2.0 - 0.045 + Math.sin(i/120)*0.35 + Math.sin(i/29)*0.12;
   const v = base + (R()-0.5)*5;
   data.push({ t:i*5, v:Math.max(60,v), g: v>180?2:1 });
 }
 const nowV = data[N-1].v;
 document.getElementById('nowVal').textContent = nowV.toFixed(1);
 
-/* 추세 화살표: 최근 30분 기울기 */
+/* 오늘(마지막 288점) 요약 */
 (function(){
-  const a = data[N-7].v, b = nowV, slope = (b-a)/a;
-  const el = document.getElementById('nowTrend');
-  let rot = 0, txt = '안정';
-  if (slope < -0.03){ rot = 35; txt = '감소 중'; }
-  if (slope >  0.03){ rot = -35; txt = '상승 중'; }
-  el.querySelector('svg').style.transform = `rotate(${rot}deg)`;
-  el.childNodes[el.childNodes.length-1].textContent = txt;
+  const day = data.slice(-288), vs = day.map(p=>p.v);
+  dayAvg.firstChild.textContent = Math.round(vs.reduce((a,b)=>a+b)/vs.length);
+  dayN.textContent = vs.length;
+  dayIn.firstChild.textContent = Math.round(100*vs.filter(v=>v>=80&&v<=240).length/vs.length);
 })();
 
-/* ============ 차트 렌더러 (SVG + 호버 툴팁) ============ */
+/* ============ 공통 ============ */
 const BAND_LO = 80, BAND_HI = 240;
-function fmtT(min){                  // min = 데이터 시작(24h*7 전)으로부터 분
-  const ago = (N-1)*5 - min;
-  const d = new Date(Date.now() - ago*60000);
-  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-}
-function drawChart(el, pts, opt){
-  const W = opt.w||352, H = opt.h||190, P = {l:34,r:12,t:10,b:20};
-  const lo = Math.min(BAND_LO-15, Math.min(...pts.map(p=>p.v))-10);
-  const hi = Math.max(BAND_HI+15, Math.max(...pts.map(p=>p.v))+10);
-  const X = i => P.l + (W-P.l-P.r) * i/(pts.length-1);
-  const Y = v => P.t + (H-P.t-P.b) * (1 - (v-lo)/(hi-lo));
-  let grid='', lbl='';
-  for (const gv of [100,150,200]){
-    grid += `<line x1="${P.l}" x2="${W-P.r}" y1="${Y(gv)}" y2="${Y(gv)}" stroke="var(--hair)" stroke-width="1"/>`;
-    lbl  += `<text x="${P.l-6}" y="${Y(gv)+3.5}" text-anchor="end" font-size="9.5" fill="var(--muted)" font-family="inherit">${gv}</text>`;
-  }
-  const line = pts.map((p,i)=>`${i?'L':'M'}${X(i).toFixed(1)} ${Y(p.v).toFixed(1)}`).join(' ');
-  const area = line + ` L${X(pts.length-1).toFixed(1)} ${Y(lo)} L${X(0).toFixed(1)} ${Y(lo)} Z`;
-  const last = pts[pts.length-1];
-  el.innerHTML = `
-  <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="전류 추이 그래프">
-    <rect x="${P.l}" y="${Y(BAND_HI)}" width="${W-P.l-P.r}" height="${Y(BAND_LO)-Y(BAND_HI)}"
-      fill="var(--band)" rx="3"/>
-    ${grid}${lbl}
+const NOW = Date.now();
+function ptDate(p){ return new Date(NOW - ((N-1)*5 - p.t)*60000); }
+function fmtHM(d){ return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
+function fmtMDHM(d){ return `${d.getMonth()+1}/${d.getDate()} ${fmtHM(d)}`; }
+
+/* ============ 스파크라인 (홈 · 호버만) ============ */
+function drawSpark(el, pts){
+  const W=352,H=120,P={l:34,r:12,t:8,b:18};
+  const lo=Math.min(...pts.map(p=>p.v))-8, hi=Math.max(...pts.map(p=>p.v))+8;
+  const X=i=>P.l+(W-P.l-P.r)*i/(pts.length-1);
+  const Y=v=>P.t+(H-P.t-P.b)*(1-(v-lo)/(hi-lo));
+  const line=pts.map((p,i)=>`${i?'L':'M'}${X(i).toFixed(1)} ${Y(p.v).toFixed(1)}`).join(' ');
+  const area=line+` L${X(pts.length-1).toFixed(1)} ${Y(lo)} L${X(0).toFixed(1)} ${Y(lo)} Z`;
+  const last=pts[pts.length-1];
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="최근 3시간 전류">
     <path d="${area}" fill="var(--accent-soft)"/>
     <path d="${line}" fill="none" stroke="var(--accent)" stroke-width="2"
       stroke-linejoin="round" stroke-linecap="round"/>
     <circle cx="${X(pts.length-1)}" cy="${Y(last.v)}" r="4" fill="var(--accent)"
       stroke="var(--surface2)" stroke-width="2"/>
-    <line id="xh" x1="0" x2="0" y1="${P.t}" y2="${H-P.b}" stroke="var(--muted)"
-      stroke-width="1" stroke-dasharray="3 3" opacity="0"/>
-    <circle id="hpt" r="4" fill="var(--accent)" stroke="var(--surface2)" stroke-width="2" opacity="0"/>
-    <text x="${W-P.r}" y="${H-6}" text-anchor="end" font-size="9.5" fill="var(--muted)" font-family="inherit">지금</text>
-    <text x="${P.l}" y="${H-6}" font-size="9.5" fill="var(--muted)" font-family="inherit">${opt.startLabel||''}</text>
-  </svg><div class="tip" role="status"></div>`;
-  const svg = el.querySelector('svg'), tip = el.querySelector('.tip'),
-        xh = el.querySelector('#xh'), hpt = el.querySelector('#hpt');
-  function move(ev){
-    const r = svg.getBoundingClientRect();
-    const cx = (ev.touches?ev.touches[0].clientX:ev.clientX) - r.left;
-    const i = Math.round((cx/r.width*W - P.l)/((W-P.l-P.r)/(pts.length-1)));
-    if (i<0||i>=pts.length) return hide();
-    const p = pts[i], sx = X(i), sy = Y(p.v);
-    xh.setAttribute('x1',sx); xh.setAttribute('x2',sx); xh.style.opacity=1;
-    hpt.setAttribute('cx',sx); hpt.setAttribute('cy',sy); hpt.style.opacity=1;
-    tip.style.left = (sx/W*100)+'%';
-    tip.style.top  = (sy/H*100)+'%';
-    tip.textContent = `${fmtT(p.t)} · ${p.v.toFixed(1)} nA · G${p.g}`;
-    tip.style.opacity = 1;
+    <text x="${P.l}" y="${H-4}" font-size="9.5" fill="var(--muted)" font-family="inherit">3시간 전</text>
+    <text x="${W-P.r}" y="${H-4}" text-anchor="end" font-size="9.5" fill="var(--muted)" font-family="inherit">지금</text>
+  </svg>`;
+}
+drawSpark(document.getElementById('spark'), data.slice(-36));
+
+/* ============ 메인 그래프: 팬/줌/점선택 ============ */
+const G = { el:document.getElementById('bigchart'),
+  W:352, H:230, P:{l:36,r:14,t:12,b:22},
+  a:N-145, b:N-1,          /* 표시 창 [a,b] (실수 인덱스) — 기본 12h */
+  DEF:[N-145, N-1], MIN_SPAN:12, sel:-1 };
+
+function gClamp(){
+  const span = G.b - G.a;
+  if (span < G.MIN_SPAN){ const c=(G.a+G.b)/2; G.a=c-G.MIN_SPAN/2; G.b=c+G.MIN_SPAN/2; }
+  if (span > N-1){ G.a=0; G.b=N-1; }
+  if (G.a < 0){ G.b-=G.a; G.a=0; }
+  if (G.b > N-1){ G.a-=(G.b-(N-1)); G.b=N-1; if(G.a<0)G.a=0; }
+}
+function gRender(){
+  gClamp();
+  const {W,H,P}=G;
+  const i0=Math.max(0,Math.floor(G.a)), i1=Math.min(N-1,Math.ceil(G.b));
+  const pts=data.slice(i0,i1+1);
+  const vs=pts.map(p=>p.v);
+  const lo=Math.min(BAND_LO-15,Math.min(...vs)-8), hi=Math.max(BAND_HI+15,Math.max(...vs)+8);
+  const X=idx=>P.l+(W-P.l-P.r)*(idx-G.a)/(G.b-G.a);
+  const Y=v=>P.t+(H-P.t-P.b)*(1-(v-lo)/(hi-lo));
+  G.X=X; G.Y=Y; G.i0=i0; G.i1=i1;
+
+  let grid='',lbl='';
+  const step=(hi-lo)>220?100:50;
+  for(let gv=Math.ceil(lo/step)*step; gv<hi; gv+=step){
+    grid+=`<line x1="${P.l}" x2="${W-P.r}" y1="${Y(gv)}" y2="${Y(gv)}" stroke="var(--hair)" stroke-width="1"/>`;
+    lbl+=`<text x="${P.l-6}" y="${Y(gv)+3.5}" text-anchor="end" font-size="9.5" fill="var(--muted)" font-family="inherit">${gv}</text>`;
   }
-  function hide(){ tip.style.opacity=0; xh.style.opacity=0; hpt.style.opacity=0; }
-  svg.addEventListener('mousemove', move);
-  svg.addEventListener('touchstart', move, {passive:true});
-  svg.addEventListener('touchmove', move, {passive:true});
-  svg.addEventListener('mouseleave', hide);
-  svg.addEventListener('touchend', hide);
+  let line='';
+  for(let i=i0;i<=i1;i++){ line+=`${i===i0?'M':'L'}${X(i).toFixed(1)} ${Y(data[i].v).toFixed(1)} `; }
+  /* 점: 표시 개수 ≤64 일 때만 (축소 시 선만 — 겹침 방지) */
+  let dots='';
+  const showDots=(i1-i0+1)<=64;
+  if(showDots){
+    for(let i=i0;i<=i1;i++){
+      dots+=`<circle cx="${X(i).toFixed(1)}" cy="${Y(data[i].v).toFixed(1)}" r="3"
+        fill="var(--accent)" stroke="var(--surface2)" stroke-width="1.5"/>`;
+    }
+  }
+  let selDot='';
+  if(G.sel>=i0&&G.sel<=i1){
+    selDot=`<circle cx="${X(G.sel).toFixed(1)}" cy="${Y(data[G.sel].v).toFixed(1)}" r="5.5"
+      fill="var(--accent)" stroke="var(--surface)" stroke-width="2.5"/>
+      <line x1="${X(G.sel).toFixed(1)}" x2="${X(G.sel).toFixed(1)}" y1="${P.t}" y2="${H-P.b}"
+      stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 3"/>`;
+  }
+  const d0=ptDate(data[i0]), d1=ptDate(data[i1]);
+  const spanH=(G.b-G.a)*5/60;
+  const fmt=spanH>24?fmtMDHM:fmtHM;
+  G.el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="전류 추이 (끌기·핀치·탭 가능)">
+    <rect x="${P.l}" y="${Y(BAND_HI)}" width="${W-P.l-P.r}" height="${Y(BAND_LO)-Y(BAND_HI)}"
+      fill="var(--band)" rx="3"/>
+    ${grid}${lbl}
+    <path d="${line}" fill="none" stroke="var(--accent)" stroke-width="2"
+      stroke-linejoin="round" stroke-linecap="round"/>
+    ${dots}${selDot}
+    <text x="${P.l}" y="${H-6}" font-size="9.5" fill="var(--muted)" font-family="inherit">${fmt(d0)}</text>
+    <text x="${W-P.r}" y="${H-6}" text-anchor="end" font-size="9.5" fill="var(--muted)" font-family="inherit">${fmt(d1)}</text>
+  </svg><div class="tip" role="status"></div>`;
+
+  /* 고정 툴팁 (선택 점) */
+  const tip=G.el.querySelector('.tip');
+  if(G.sel>=i0&&G.sel<=i1){
+    const p=data[G.sel];
+    tip.textContent=`${fmtMDHM(ptDate(p))} · ${p.v.toFixed(1)} nA · G${p.g}`;
+    tip.style.left=(X(G.sel)/W*100)+'%';
+    tip.style.top=(Y(p.v)/H*100)+'%';
+    tip.style.opacity=1;
+  }
+
+  /* 툴바·통계 */
+  gspan.textContent = spanH>=48?`${(spanH/24).toFixed(1)}일 표시`:
+                      spanH>=1?`${spanH.toFixed(1)}시간 표시`:`${Math.round(spanH*60)}분 표시`;
+  const inb=vs.filter(v=>v>=BAND_LO&&v<=BAND_HI).length;
+  stAvg.firstChild.textContent=Math.round(vs.reduce((a,b)=>a+b)/vs.length);
+  stMin.firstChild.textContent=Math.round(Math.min(...vs));
+  stMax.firstChild.textContent=Math.round(Math.max(...vs));
+  stIn.firstChild.textContent=Math.round(100*inb/vs.length);
+  stN.textContent=vs.length;
 }
 
-/* 홈 스파크라인 (3h = 36점) */
-drawChart(document.getElementById('spark'), data.slice(-36), {h:120, startLabel:'3시간 전'});
-
-/* 그래프 탭 — 기간 전환 */
-function renderBig(hours){
-  const n = Math.min(N, Math.round(hours*60/5));
-  const pts = data.slice(-n);
-  drawChart(document.getElementById('bigchart'), pts,
-    {h:210, startLabel: hours>=168?'7일 전':hours+'시간 전'});
-  const vs = pts.map(p=>p.v);
-  const inb = vs.filter(v=>v>=BAND_LO&&v<=BAND_HI).length;
-  stAvg.firstChild.textContent = Math.round(vs.reduce((a,b)=>a+b)/vs.length);
-  stMin.firstChild.textContent = Math.round(Math.min(...vs));
-  stMax.firstChild.textContent = Math.round(Math.max(...vs));
-  stIn.firstChild.textContent  = Math.round(100*inb/vs.length);
-  stN.textContent = vs.length;
-}
-document.querySelectorAll('.seg button').forEach(b=>{
-  b.addEventListener('click',()=>{
-    document.querySelectorAll('.seg button').forEach(x=>x.setAttribute('aria-pressed','false'));
-    b.setAttribute('aria-pressed','true');
-    renderBig(+b.dataset.h);
+/* ---- 제스처: 드래그 팬 · 핀치/휠 줌 · 탭 선택 ----
+ * 리스너는 영속 컨테이너(#bigchart)에 1회만 바인딩 — 렌더 때 svg 가
+ * 새로 만들어져도 포인터 캡처가 끊기지 않는다. */
+(function(){
+  const box=G.el;
+  const ptrs=new Map();
+  let start=null;
+  /* 화면 px → 데이터 인덱스 (svg 는 컨테이너 폭에 맞춰 렌더됨) */
+  function pxToIdx(clientX,a,b){
+    const r=box.getBoundingClientRect();
+    const sx=(clientX-r.left)/r.width*G.W;
+    return a+(sx-G.P.l)/((G.W-G.P.l-G.P.r)/(b-a));
+  }
+  box.addEventListener('pointerdown',e=>{
+    box.setPointerCapture(e.pointerId);
+    ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(ptrs.size===1){ start={x:e.clientX,a:G.a,b:G.b,moved:false,t:Date.now()}; }
+    else if(ptrs.size===2){
+      const [p1,p2]=[...ptrs.values()];
+      start={dist:Math.max(20,Math.abs(p1.x-p2.x)),a:G.a,b:G.b,
+             cx:(p1.x+p2.x)/2,moved:true};
+    }
+    box.classList.add('dragging');
   });
+  box.addEventListener('pointermove',e=>{
+    if(!ptrs.has(e.pointerId))return;
+    ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(!start)return;
+    const r=box.getBoundingClientRect();
+    const idxPerPx=(start.b-start.a)/(r.width*(G.W-G.P.l-G.P.r)/G.W);
+    if(ptrs.size===1){
+      const dx=e.clientX-start.x;
+      if(Math.abs(dx)>5)start.moved=true;
+      if(start.moved){
+        G.a=start.a-dx*idxPerPx; G.b=start.b-dx*idxPerPx;
+        gRender();
+      }
+    } else if(ptrs.size===2){
+      const [p1,p2]=[...ptrs.values()];
+      const nd=Math.max(20,Math.abs(p1.x-p2.x));
+      const scale=start.dist/nd;
+      const cIdx=pxToIdx(start.cx,start.a,start.b);
+      G.a=cIdx-(cIdx-start.a)*scale;
+      G.b=cIdx+(start.b-cIdx)*scale;
+      gRender();
+    }
+  });
+  function up(e){
+    if(start&&ptrs.size===1&&!start.moved&&(Date.now()-start.t)<500){
+      /* 탭 → 가장 가까운 점 선택 (반경 22px), 같은 점 다시 탭 = 해제 */
+      const r=box.getBoundingClientRect();
+      const sx=(e.clientX-r.left)/r.width*G.W, sy=(e.clientY-r.top)/r.height*G.H;
+      let best=-1,bd=22;
+      for(let i=G.i0;i<=G.i1;i++){
+        const d=Math.hypot(G.X(i)-sx,G.Y(data[i].v)-sy);
+        if(d<bd){bd=d;best=i;}
+      }
+      G.sel=(best===G.sel)?-1:best;
+      gRender();
+    }
+    ptrs.delete(e.pointerId);
+    if(ptrs.size===0){ start=null; box.classList.remove('dragging'); }
+    else if(ptrs.size===1){       /* 핀치 → 한 손가락: 팬으로 전환 */
+      const p=[...ptrs.values()][0];
+      start={x:p.x,a:G.a,b:G.b,moved:true,t:Date.now()};
+    }
+  }
+  box.addEventListener('pointerup',up);
+  box.addEventListener('pointercancel',up);
+  box.addEventListener('wheel',e=>{
+    e.preventDefault();
+    const cIdx=pxToIdx(e.clientX,G.a,G.b);
+    const scale=e.deltaY>0?1.18:0.85;
+    G.a=cIdx-(cIdx-G.a)*scale; G.b=cIdx+(G.b-cIdx)*scale;
+    gRender();
+  },{passive:false});
+})();
+document.getElementById('greset').addEventListener('click',()=>{
+  [G.a,G.b]=G.DEF; G.sel=-1; gRender();
 });
-renderBig(12);
+gRender();
 
-/* 기록 리스트 */
+/* ============ 기록 리스트 ============ */
 function logRows(el, rows){
   el.innerHTML = rows.map(r=>`<div class="item"><span class="t">${r[0]}</span>
     <span class="v">${r[1]} <small>nA</small></span><span class="g">G${r[2]} · 요약</span></div>`).join('');
@@ -488,7 +590,7 @@ logRows(document.getElementById('logToday'), [
 logRows(document.getElementById('logYest'), [
   ['23:55','171.3',1],['23:50','170.8',1],['23:45','173.5',1],['23:40','177.0',2]]);
 
-/* 탭 전환 */
+/* ============ 탭 전환 / 토글 ============ */
 document.querySelectorAll('.tabbar button').forEach(b=>{
   b.addEventListener('click',()=>{
     document.querySelectorAll('.tabbar button').forEach(x=>x.setAttribute('aria-selected','false'));
@@ -497,18 +599,8 @@ document.querySelectorAll('.tabbar button').forEach(b=>{
     document.getElementById(b.dataset.scr).classList.add('on');
   });
 });
-
-/* 토글 (목업 동작만) */
 document.querySelectorAll('.toggle').forEach(t=>{
   t.addEventListener('click',()=>t.setAttribute('aria-checked',
     t.getAttribute('aria-checked')==='true'?'false':'true'));
 });
-
-/* 카운트다운 데모 */
-(function(){
-  let s = 227;
-  setInterval(()=>{ s = s>0 ? s-1 : 300;
-    cd.textContent = `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
-  }, 1000);
-})();
 </script>
