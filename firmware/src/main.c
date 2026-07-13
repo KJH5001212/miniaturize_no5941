@@ -52,7 +52,7 @@ LOG_MODULE_REGISTER(pstat, LOG_LEVEL_INF);
 /* 배터리 정책 (LIR2032 무보호 셀 — 펌웨어가 과방전 보호) */
 #define VBAT_WARN_MV   3300     /* 경고 + 신규 start 거부 */
 #define VBAT_CUT_MV    3000     /* 데이터 플러시 후 System OFF */
-#define VBAT_PERIOD_MS 5000
+#define VBAT_PERIOD_MS 600000   /* 10분 */
 
 /* BLE 연결간격 (1.25ms 단위), supervision timeout (10ms 단위)
  * — AD5941 버전에서 검증된 상시 빠른 간격 유지 (전환 지연/타임아웃 회피) */
@@ -671,7 +671,7 @@ int main(void)
 		k_msleep(20);
 		tick++;
 
-		/* 배터리: 5초마다 (측정 중에도 — SAADC 채널 분리라 간섭 없음) */
+		/* 배터리: 10분마다 (측정 중에도 — SAADC 채널 분리라 간섭 없음) */
 		if ((tick % (VBAT_PERIOD_MS / 20)) == 0) {
 			battery_check();
 		}
