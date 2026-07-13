@@ -81,9 +81,17 @@ body {
 .chip .dot { width:7px; height:7px; border-radius:50%; }
 .chip.ok .dot { background:var(--good); } .chip.ok { color:var(--good); background:var(--good-soft); }
 .spacer { flex:1; }
-.batt { display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700;
-  color:var(--ink2); font-variant-numeric:tabular-nums; }
-.batt svg { display:block; }
+/* 기기 상태 카드 (홈) — '기기 배터리' 명시로 폰 배터리와 혼동 차단 */
+.dev { display:flex; align-items:center; gap:14px; background:var(--surface2);
+  border-radius:16px; padding:12px 16px; margin-bottom:12px; }
+.dev .ic { width:38px; height:38px; border-radius:12px; background:var(--accent-soft);
+  display:flex; align-items:center; justify-content:center; color:var(--accent); flex:0 0 auto; }
+.dev .tx b { font-size:14.5px; }
+.dev .tx .cap { margin-top:0; }
+.dev .ring { margin-left:auto; text-align:center; }
+.dev .ring svg { display:block; margin:0 auto; }
+.dev .ring .pct { font-size:12px; font-weight:800; font-variant-numeric:tabular-nums; }
+.dev .ring .lab { font-size:9.5px; color:var(--muted); font-weight:700; letter-spacing:.04em; }
 
 /* 동기화 배너 */
 .sync { margin:4px 0 12px; background:var(--accent-soft); border:1px solid transparent;
@@ -198,19 +206,35 @@ body {
     <div class="brand">Ampero<small>.</small></div>
     <span class="chip ok"><span class="dot"></span>pstat 연결됨</span>
     <div class="spacer"></div>
-    <div class="batt" title="배터리 82% · 충전패드 아님">
-      <svg width="22" height="12" viewBox="0 0 22 12" fill="none" aria-hidden="true">
-        <rect x="1" y="1" width="18" height="10" rx="2.5" stroke="currentColor" stroke-width="1.4"/>
-        <rect x="3" y="3" width="11.5" height="6" rx="1" fill="currentColor"/>
-        <rect x="20" y="4" width="2" height="4" rx="1" fill="currentColor"/>
-      </svg>82%
-    </div>
   </div>
 
   <div class="p-body">
 
     <!-- ===== 홈 ===== -->
     <section class="screen on" id="scr-home">
+      <div class="dev">
+        <div class="ic">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <rect x="4" y="2.5" width="12" height="15" rx="3" stroke="currentColor" stroke-width="1.7"/>
+            <path d="M8 17.5 V19 M12 17.5 V19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+            <path d="M7.5 10 h2 l1.2-3 1.6 6 1.2-3 h1" stroke="currentColor" stroke-width="1.5"
+              fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="tx"><b>pstat</b>
+          <div class="cap">연결됨 · 충전패드 밖 · 전극 1일차</div></div>
+        <div class="ring" title="측정기 배터리 (폰 아님)">
+          <svg width="44" height="44" viewBox="0 0 44 44" aria-label="기기 배터리 82%">
+            <circle cx="22" cy="22" r="17" fill="none" stroke="var(--hair)" stroke-width="4.5"/>
+            <circle cx="22" cy="22" r="17" fill="none" stroke="var(--good)" stroke-width="4.5"
+              stroke-linecap="round" stroke-dasharray="87.6 106.8"
+              transform="rotate(-90 22 22)"/>
+            <text x="22" y="26" text-anchor="middle" font-size="11" font-weight="800"
+              fill="var(--ink)" font-family="inherit">82</text>
+          </svg>
+          <div class="lab">기기 배터리</div>
+        </div>
+      </div>
       <div class="sync">밀린 측정 214개 동기화 중 · 68%
         <div class="bar"><i></i></div>
       </div>
@@ -262,6 +286,7 @@ body {
       <div class="day">오늘</div>
       <div class="log" id="logToday"></div>
       <div class="ev info">✓ 10:12 스케일 캘리브레이션 완료 (1 MΩ 더미셀 · scale 1.013)</div>
+      <div class="ev warn">⟳ 09:30 전극 교체 — 제로 보정 완료</div>
       <div class="day">어제</div>
       <div class="log" id="logYest"></div>
     </section>
@@ -288,6 +313,13 @@ body {
         <div class="item"><div class="lab">RF (TIA 저항)</div><div class="val">2.0 MΩ</div></div>
         <div class="item"><div class="lab">오버샘플링</div><div class="val">64×</div></div>
       </div>
+
+      <div class="set">
+        <div class="head">전극</div>
+        <div class="item"><div class="lab">마지막 교체
+          <div class="cap">어제 09:30 · 1일 경과</div></div></div>
+      </div>
+      <button class="btn ghost">전극 교체 기록 (교체 직후 누르기)</button>
 
       <div class="set">
         <div class="head">캘리브레이션</div>
@@ -322,19 +354,20 @@ body {
 
 <!-- ==================== 설계 노트 ==================== -->
 <div class="notes">
-  <h1>Ampero — 웨어러블 포텐쇼스탯 전용 앱 <span style="color:var(--accent)">목업 v0.2</span></h1>
+  <h1>Ampero — 웨어러블 포텐쇼스탯 전용 앱 <span style="color:var(--accent)">목업 v0.4</span></h1>
   <p class="sub">상용 CGM 앱 문법 그대로, 표기만 전류(nA). 그래프 탭에서
   <b>끌어서 과거로 이동, 핀치(또는 휠)로 확대·축소, 점을 탭하면 정확한 수치</b>가 떠.
   화면 구성 확정 후 Kotlin(Compose)으로 한 번에 빌드.</p>
 
   <div class="note-card">
-    <h2>v0.2 변경 (피드백 반영)</h2>
+    <h2>v0.3–0.4 변경 (피드백 반영)</h2>
     <ul>
-      <li>메인 그래프: <b>점+선</b> 동시 표시 (확대해서 점이 64개 이하일 때 점 표시 — 축소 시 선만)</li>
-      <li><b>제스처</b>: 드래그 팬 · 핀치/휠 줌 · 점 탭 → 고정 툴팁(시각·nA·게인) · <b>초기화</b> 버튼</li>
-      <li>기간 세그먼트(3h/12h/24h/7d) 제거 — 제스처로 대체, 기본 뷰 12시간</li>
-      <li>추세 화살표 제거 · "다음 측정" 카운트다운 제거</li>
-      <li>통계 타일은 현재 표시 구간 기준으로 실시간 갱신</li>
+      <li><b>전극 교체 마커</b>: 그래프에 세로 점선+태그 (데모: 26시간 전 / 5일 전).
+        기록 탭 이벤트·설정→전극 "교체 기록" 버튼과 연동 — 교체 시점은 앱이 기록</li>
+      <li><b>기기 배터리 분리 표기</b>: 상단바에서 제거 → 홈의 기기 카드에
+        링 게이지 + "기기 배터리" 라벨 명시 (폰 배터리와 혼동 차단)</li>
+      <li>x축: 확대 정도 따라 30분/1/3/6/12h/1d/2d 정시 눈금 자동 선택</li>
+      <li>점+선 동시 표시(64점 이하) · 드래그 팬 · 핀치/휠 줌 · 점 탭=수치 · 초기화</li>
     </ul>
   </div>
 
@@ -349,6 +382,7 @@ body {
       <tr><td>lb</td><td>저전압 경고 배너 + 측정 시작 차단 안내</td></tr>
       <tr><td>rf / os / agg</td><td>설정 → 하드웨어·측정 (config 명령 전송)</td></tr>
       <tr><td>zero / cal</td><td>설정 → 캘리브레이션 버튼 2개</td></tr>
+      <tr><td>(앱 로컬)</td><td>전극 교체 이벤트 — 그래프 마커·기록·전극 경과일</td></tr>
     </table>
   </div>
 
@@ -358,6 +392,8 @@ body {
       <li>목표 범위 80–240 nA 기본값 — 사용자 편집 UI 넣을까?</li>
       <li>나중 농도 환산(nA → 대상 단위) 계수 입력 자리 예약?</li>
       <li>알림 정책: 범위 이탈 / 배터리 / 동기화 완료 푸시</li>
+      <li>전극 교체 기록 직후 제로/스케일 보정 플로우 자동 안내할까?</li>
+      <li>전극 수명(예: 7일) 설정해서 "교체 임박" 알림 줄까?</li>
     </ul>
   </div>
 </div>
@@ -413,6 +449,12 @@ function drawSpark(el, pts){
   </svg>`;
 }
 drawSpark(document.getElementById('spark'), data.slice(-36));
+
+/* 전극 교체 이벤트 (앱 로컬 기록 — 데모: 26시간 전 / 5일 전) */
+const EVENTS=[
+  {i:N-1-26*12,  label:'전극 교체'},
+  {i:N-1-120*12, label:'전극 교체'},
+];
 
 /* ============ 메인 그래프: 팬/줌/점선택 ============ */
 const G = { el:document.getElementById('bigchart'),
@@ -479,6 +521,18 @@ function gRender(){
         fill="var(--accent)" stroke="var(--surface2)" stroke-width="1.5"/>`;
     }
   }
+  /* 전극 교체 마커: 세로 실선 + 상단 태그 */
+  let evm='';
+  for(const ev of EVENTS){
+    if(ev.i<G.a||ev.i>G.b) continue;
+    const x=X(ev.i);
+    evm+=`<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${P.t+11}" y2="${H-P.b}"
+      stroke="var(--warn)" stroke-width="1.6" stroke-dasharray="5 3"/>
+      <rect x="${(x-26).toFixed(1)}" y="${P.t-2}" width="52" height="13" rx="6.5" fill="var(--warn-soft)"/>
+      <text x="${x.toFixed(1)}" y="${P.t+8}" text-anchor="middle" font-size="8.5"
+      font-weight="700" fill="var(--warn)" font-family="inherit">전극 교체</text>`;
+  }
+
   let selDot='';
   if(G.sel>=i0&&G.sel<=i1){
     selDot=`<circle cx="${X(G.sel).toFixed(1)}" cy="${Y(data[G.sel].v).toFixed(1)}" r="5.5"
@@ -490,7 +544,7 @@ function gRender(){
   G.el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="전류 추이 (끌기·핀치·탭 가능)">
     <rect x="${P.l}" y="${Y(BAND_HI)}" width="${W-P.l-P.r}" height="${Y(BAND_LO)-Y(BAND_HI)}"
       fill="var(--band)" rx="3"/>
-    ${grid}${lbl}${xt}
+    ${grid}${lbl}${xt}${evm}
     <path d="${line}" fill="none" stroke="var(--accent)" stroke-width="2"
       stroke-linejoin="round" stroke-linecap="round"/>
     ${dots}${selDot}
