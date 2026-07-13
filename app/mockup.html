@@ -92,7 +92,9 @@ body {
 .dev .ring { margin-left:auto; text-align:center; }
 .dev .ring svg { display:block; margin:0 auto; }
 .dev .ring .pct { font-size:12px; font-weight:800; font-variant-numeric:tabular-nums; }
-.dev .ring .lab { font-size:9.5px; color:var(--muted); font-weight:700; letter-spacing:.04em; }
+.dev .ring .lab { font-size:9.5px; color:var(--muted); font-weight:700; letter-spacing:.04em;
+  white-space:nowrap; }
+.dev .tx .cap { font-size:11px; }
 
 /* 동기화 배너 */
 .sync { margin:4px 0 12px; background:var(--accent-soft); border:1px solid transparent;
@@ -243,7 +245,7 @@ body {
           </svg>
         </div>
         <div class="tx"><b>pstat</b>
-          <div class="cap">연결됨 · 충전패드 밖 · 전극 E-087 1일차</div></div>
+          <div class="cap">연결됨 · 패드 밖 · 전극 1일차</div></div>
         <div class="ring" title="측정기 배터리 (폰 아님)">
           <svg width="44" height="44" viewBox="0 0 44 44" aria-label="기기 배터리 82%">
             <circle cx="22" cy="22" r="17" fill="none" stroke="var(--hair)" stroke-width="4.5"/>
@@ -268,28 +270,14 @@ body {
       </div>
 
       <div class="card">
-        <h3>최근 3시간</h3>
-        <div class="chart-wrap" id="spark"></div>
-      </div>
-
-      <div class="row">
-        <div class="card"><h3>오늘 평균</h3><div class="stat" id="dayAvg">156<small>nA</small></div>
-          <div class="cap">측정 <span id="dayN">193</span>회</div></div>
-        <div class="card"><h3>오늘 범위 내</h3><div class="stat" id="dayIn">94<small>%</small></div>
-          <div class="cap">목표 80–240 nA</div></div>
-      </div>
-    </section>
-
-    <!-- ===== 그래프 ===== -->
-    <section class="screen" id="scr-graph">
-      <div class="gbar">
-        <span class="span" id="gspan">최근 12시간</span>
-        <span class="hint">끌기=이동 · 핀치/휠=확대 · 점 탭=수치</span>
-        <button class="reset" id="greset">초기화</button>
-      </div>
-      <div class="card" style="margin-top:0">
+        <div class="gbar" style="margin:0 0 8px">
+          <span class="span" id="gspan">최근 12시간</span>
+          <button class="reset" id="greset">초기화</button>
+        </div>
         <div class="chart-wrap" id="bigchart"></div>
+        <div class="cap" style="margin-top:6px">끌기=이동 · 핀치/휠=확대 · 점 탭=수치</div>
       </div>
+
       <div class="row">
         <div class="card"><h3>평균</h3><div class="stat" id="stAvg">158<small>nA</small></div></div>
         <div class="card"><h3>최저</h3><div class="stat" id="stMin">121<small>nA</small></div></div>
@@ -383,8 +371,6 @@ body {
   <nav class="tabbar" role="tablist" aria-label="화면">
     <button role="tab" aria-selected="true" data-scr="scr-home">
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M3.5 9.5 L11 3 L18.5 9.5 V18 a1 1 0 0 1 -1 1 H4.5 a1 1 0 0 1 -1 -1 Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>홈</button>
-    <button role="tab" aria-selected="false" data-scr="scr-graph">
-      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M3 16 L8 10 L12 13 L19 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 20 H19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>그래프</button>
     <button role="tab" aria-selected="false" data-scr="scr-log">
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><rect x="4" y="3" width="14" height="16" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 8 H14 M8 12 H14 M8 16 H11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>기록</button>
     <button role="tab" aria-selected="false" data-scr="scr-set">
@@ -394,14 +380,17 @@ body {
 
 <!-- ==================== 설계 노트 ==================== -->
 <div class="notes">
-  <h1>Ampero — 웨어러블 포텐쇼스탯 전용 앱 <span style="color:var(--accent)">목업 v0.5</span></h1>
-  <p class="sub">상용 CGM 앱 문법 그대로, 표기만 전류(nA). 그래프 탭에서
+  <h1>Ampero — 웨어러블 포텐쇼스탯 전용 앱 <span style="color:var(--accent)">목업 v0.6</span></h1>
+  <p class="sub">상용 CGM 앱 문법 그대로, 표기만 전류(nA). 홈 그래프에서
   <b>끌어서 과거로 이동, 핀치(또는 휠)로 확대·축소, 점을 탭하면 정확한 수치</b>가 떠.
-  화면 구성 확정 후 Kotlin(Compose)으로 한 번에 빌드.</p>
+  탭은 홈/기록/설정 3개. 화면 구성 확정 후 Kotlin(Compose)으로 한 번에 빌드.</p>
 
   <div class="note-card">
-    <h2>v0.3–0.5 변경 (피드백 반영)</h2>
+    <h2>v0.3–0.6 변경 (피드백 반영)</h2>
     <ul>
+      <li><b>그래프 탭 삭제 → 홈에 통합</b>: 홈의 스파크라인 자리가 팬/줌/점탭/전극마커/
+        초기화가 전부 되는 메인 그래프로 승격. 통계 타일(평균·최저·최고·범위내%)은
+        표시 구간 기준. 탭은 홈/기록/설정 3개</li>
       <li><b>전극 QR 등록</b>: 설정→전극 "QR 스캔" 버튼 → 스캔 시트(목업 데모 동작)
         → 전극 ID·로트·유효기한 자동 등록 + 교체 시점 기록. 수동 기록은 QR 훼손 시 폴백</li>
       <li><b>전극 교체 마커</b>: 그래프에 세로 점선+태그 (데모: 26시간 전 / 5일 전).
@@ -458,41 +447,12 @@ for (let i=0;i<N;i++){
 const nowV = data[N-1].v;
 document.getElementById('nowVal').textContent = nowV.toFixed(1);
 
-/* 오늘(마지막 288점) 요약 */
-(function(){
-  const day = data.slice(-288), vs = day.map(p=>p.v);
-  dayAvg.firstChild.textContent = Math.round(vs.reduce((a,b)=>a+b)/vs.length);
-  dayN.textContent = vs.length;
-  dayIn.firstChild.textContent = Math.round(100*vs.filter(v=>v>=80&&v<=240).length/vs.length);
-})();
-
 /* ============ 공통 ============ */
 const BAND_LO = 80, BAND_HI = 240;
 const NOW = Date.now();
 function ptDate(p){ return new Date(NOW - ((N-1)*5 - p.t)*60000); }
 function fmtHM(d){ return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
 function fmtMDHM(d){ return `${d.getMonth()+1}/${d.getDate()} ${fmtHM(d)}`; }
-
-/* ============ 스파크라인 (홈 · 호버만) ============ */
-function drawSpark(el, pts){
-  const W=352,H=120,P={l:34,r:12,t:8,b:18};
-  const lo=Math.min(...pts.map(p=>p.v))-8, hi=Math.max(...pts.map(p=>p.v))+8;
-  const X=i=>P.l+(W-P.l-P.r)*i/(pts.length-1);
-  const Y=v=>P.t+(H-P.t-P.b)*(1-(v-lo)/(hi-lo));
-  const line=pts.map((p,i)=>`${i?'L':'M'}${X(i).toFixed(1)} ${Y(p.v).toFixed(1)}`).join(' ');
-  const area=line+` L${X(pts.length-1).toFixed(1)} ${Y(lo)} L${X(0).toFixed(1)} ${Y(lo)} Z`;
-  const last=pts[pts.length-1];
-  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="최근 3시간 전류">
-    <path d="${area}" fill="var(--accent-soft)"/>
-    <path d="${line}" fill="none" stroke="var(--accent)" stroke-width="2"
-      stroke-linejoin="round" stroke-linecap="round"/>
-    <circle cx="${X(pts.length-1)}" cy="${Y(last.v)}" r="4" fill="var(--accent)"
-      stroke="var(--surface2)" stroke-width="2"/>
-    <text x="${P.l}" y="${H-4}" font-size="9.5" fill="var(--muted)" font-family="inherit">3시간 전</text>
-    <text x="${W-P.r}" y="${H-4}" text-anchor="end" font-size="9.5" fill="var(--muted)" font-family="inherit">지금</text>
-  </svg>`;
-}
-drawSpark(document.getElementById('spark'), data.slice(-36));
 
 /* 전극 교체 이벤트 (앱 로컬 기록 — 데모: 26시간 전 / 5일 전) */
 const EVENTS=[
