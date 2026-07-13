@@ -444,6 +444,30 @@ function gRender(){
     grid+=`<line x1="${P.l}" x2="${W-P.r}" y1="${Y(gv)}" y2="${Y(gv)}" stroke="var(--hair)" stroke-width="1"/>`;
     lbl+=`<text x="${P.l-6}" y="${Y(gv)+3.5}" text-anchor="end" font-size="9.5" fill="var(--muted)" font-family="inherit">${gv}</text>`;
   }
+
+  /* x축 눈금: 확대 정도에 따라 30분/1h/3h/6h/12h/1d/2d 정시 간격 자동 선택 */
+  const spanMin=(G.b-G.a)*5;
+  const LADDER=[30,60,180,360,720,1440,2880];
+  let ivl=LADDER[LADDER.length-1];
+  for(const L of LADDER){ if(spanMin/L<=6){ ivl=L; break; } }
+  const timeOf=idx=>NOW-((N-1)-idx)*300000;
+  const Ta=timeOf(G.a), Tb=timeOf(G.b);
+  const da=new Date(Ta);
+  const mid=new Date(da.getFullYear(),da.getMonth(),da.getDate()).getTime();
+  const mins=(Ta-mid)/60000;
+  let tick=mid+Math.ceil(mins/ivl)*ivl*60000;
+  let xt='';
+  for(; tick<=Tb; tick+=ivl*60000){
+    const idx=(N-1)-(NOW-tick)/300000;
+    const x=X(idx);
+    if(x<P.l+16||x>W-P.r-16) continue;   /* 모서리 라벨 겹침 방지 */
+    const td=new Date(tick);
+    const txt=ivl>=1440 ? `${td.getMonth()+1}/${td.getDate()}` : fmtHM(td);
+    xt+=`<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${P.t}" y2="${H-P.b}"
+      stroke="var(--hair)" stroke-width="1"/>
+      <text x="${x.toFixed(1)}" y="${H-6}" text-anchor="middle" font-size="9.5"
+      fill="var(--muted)" font-family="inherit">${txt}</text>`;
+  }
   let line='';
   for(let i=i0;i<=i1;i++){ line+=`${i===i0?'M':'L'}${X(i).toFixed(1)} ${Y(data[i].v).toFixed(1)} `; }
   /* 점: 표시 개수 ≤64 일 때만 (축소 시 선만 — 겹침 방지) */
@@ -462,18 +486,14 @@ function gRender(){
       <line x1="${X(G.sel).toFixed(1)}" x2="${X(G.sel).toFixed(1)}" y1="${P.t}" y2="${H-P.b}"
       stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 3"/>`;
   }
-  const d0=ptDate(data[i0]), d1=ptDate(data[i1]);
   const spanH=(G.b-G.a)*5/60;
-  const fmt=spanH>24?fmtMDHM:fmtHM;
   G.el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="전류 추이 (끌기·핀치·탭 가능)">
     <rect x="${P.l}" y="${Y(BAND_HI)}" width="${W-P.l-P.r}" height="${Y(BAND_LO)-Y(BAND_HI)}"
       fill="var(--band)" rx="3"/>
-    ${grid}${lbl}
+    ${grid}${lbl}${xt}
     <path d="${line}" fill="none" stroke="var(--accent)" stroke-width="2"
       stroke-linejoin="round" stroke-linecap="round"/>
     ${dots}${selDot}
-    <text x="${P.l}" y="${H-6}" font-size="9.5" fill="var(--muted)" font-family="inherit">${fmt(d0)}</text>
-    <text x="${W-P.r}" y="${H-6}" text-anchor="end" font-size="9.5" fill="var(--muted)" font-family="inherit">${fmt(d1)}</text>
   </svg><div class="tip" role="status"></div>`;
 
   /* 고정 툴팁 (선택 점) */
