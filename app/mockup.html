@@ -316,10 +316,12 @@ body {
 
       <div class="card">
         <div class="gbar" style="margin-bottom:4px">
-          <span class="span">하루 전체 (00–24시)</span>
+          <span class="span" id="dSpan">하루 전체</span>
           <span class="srv" id="srvTag">☁ 서버</span>
+          <button class="reset" id="dReset">초기화</button>
         </div>
         <div class="chart-wrap" id="daychart"></div>
+        <div class="cap" style="margin-top:4px">끌기·핀치·점탭 · ◆ 변곡점 수치</div>
       </div>
 
       <div class="strip" style="margin-bottom:8px">
@@ -416,14 +418,18 @@ body {
 
 <!-- ==================== 설계 노트 ==================== -->
 <div class="notes">
-  <h1>Ampero — 웨어러블 포텐쇼스탯 전용 앱 <span style="color:var(--accent)">목업 v0.7</span></h1>
+  <h1>Ampero — 웨어러블 포텐쇼스탯 전용 앱 <span style="color:var(--accent)">목업 v0.8</span></h1>
   <p class="sub">상용 CGM 앱 문법 그대로, 표기만 전류(nA). 홈은 <b>스크롤 없는 원스크린</b>,
   기록은 <b>서버 일자별 조회</b>, 설정은 <b>계정/서비스 중심</b>. 화면 확정 후
   Kotlin(Compose)으로 한 번에 빌드.</p>
 
   <div class="note-card">
-    <h2>v0.7 변경 (피드백 반영)</h2>
+    <h2>v0.7–0.8 변경 (피드백 반영)</h2>
     <ul>
+      <li><b>기록 그래프도 팬/줌/점탭/초기화</b> — 홈과 동일 엔진(공용 차트 팩토리),
+        하루 범위 안에서 확대·이동</li>
+      <li><b>변곡점 수치 자동 표기</b>: 곡선을 평활화한 뒤 방향이 꺾이는 지점
+        (프로미넌스 ≥5 nA)을 찾아 ◆ 마커+값 라벨 — 화면당 과밀 방지 필터 포함</li>
       <li><b>홈 원스크린</b>: 히어로 축소·동기화 슬림화·통계 1행 스트립 — 812px 안에
         스크롤 없이 전부 (그래프 팬/줌/점탭/마커/초기화는 그대로)</li>
       <li><b>기록 = 서버 일자별 조회</b>: ‹ 날짜 › 네비게이션 → 그 날 00–24시 하루치
@@ -475,7 +481,7 @@ const N = 2016;                      // 7일 × 288
 const data = [];                     // {t(분, 0=7일전), v(nA), g(게인)}
 let base = 232;
 for (let i=0;i<N;i++){
-  base += (R()-0.5)*2.0 - 0.045 + Math.sin(i/120)*0.35 + Math.sin(i/29)*0.12;
+  base += (R()-0.5)*2.0 - 0.03 + Math.sin(i/48)*0.55 + Math.sin(i/17)*0.2;
   const v = base + (R()-0.5)*5;
   data.push({ t:i*5, v:Math.max(60,v), g: v>180?2:1 });
 }
@@ -493,195 +499,250 @@ const EVENTS=[
   {i:N-1-120*12, label:'전극 교체', id:'E-2406-051'},
 ];
 
-/* ============ 홈 메인 그래프: 팬/줌/점선택 ============ */
-const G = { el:document.getElementById('bigchart'),
-  W:352, H:196, P:{l:34,r:12,t:12,b:20},
-  a:N-145, b:N-1, DEF:[N-145, N-1], MIN_SPAN:12, sel:-1 };
-
-function gClamp(){
-  const span = G.b - G.a;
-  if (span < G.MIN_SPAN){ const c=(G.a+G.b)/2; G.a=c-G.MIN_SPAN/2; G.b=c+G.MIN_SPAN/2; }
-  if (span > N-1){ G.a=0; G.b=N-1; }
-  if (G.a < 0){ G.b-=G.a; G.a=0; }
-  if (G.b > N-1){ G.a-=(G.b-(N-1)); G.b=N-1; if(G.a<0)G.a=0; }
-}
-/* 공통 SVG 조각 생성 */
-function chartSvg(pts, i0, X, Y, lo, hi, W, H, P, opt){
-  let grid='',lbl='';
-  const step=(hi-lo)>220?100:50;
-  for(let gv=Math.ceil(lo/step)*step; gv<hi; gv+=step){
-    grid+=`<line x1="${P.l}" x2="${W-P.r}" y1="${Y(gv)}" y2="${Y(gv)}" stroke="var(--hair)" stroke-width="1"/>`;
-    lbl+=`<text x="${P.l-6}" y="${Y(gv)+3.5}" text-anchor="end" font-size="9.5" fill="var(--muted)" font-family="inherit">${gv}</text>`;
+/* ============ 변곡점 검출: 평활화 → 프로미넌스 지그재그 ============ */
+function findTurns(i0, i1, minProm){
+  const n=i1-i0+1; if(n<12) return [];
+  const sm=new Array(n);
+  for(let k=0;k<n;k++){
+    let s=0,c=0;
+    for(let j=-4;j<=4;j++){ const m=k+j; if(m>=0&&m<n){ s+=data[i0+m].v; c++; } }
+    sm[k]=s/c;
   }
-  let line='';
-  pts.forEach((p,k)=>{ line+=`${k?'L':'M'}${X(i0+k).toFixed(1)} ${Y(p.v).toFixed(1)} `; });
-  return {grid,lbl,line};
-}
-function gRender(){
-  gClamp();
-  const {W,H,P}=G;
-  const i0=Math.max(0,Math.floor(G.a)), i1=Math.min(N-1,Math.ceil(G.b));
-  const pts=data.slice(i0,i1+1);
-  const vs=pts.map(p=>p.v);
-  const lo=Math.min(BAND_LO-15,Math.min(...vs)-8), hi=Math.max(BAND_HI+15,Math.max(...vs)+8);
-  const X=idx=>P.l+(W-P.l-P.r)*(idx-G.a)/(G.b-G.a);
-  const Y=v=>P.t+(H-P.t-P.b)*(1-(v-lo)/(hi-lo));
-  G.X=X; G.Y=Y; G.i0=i0; G.i1=i1;
-  const {grid,lbl,line}=chartSvg(pts,i0,X,Y,lo,hi,W,H,P);
-
-  /* x축 눈금: 확대 정도에 따라 30분/1h/3h/6h/12h/1d/2d 정시 간격 */
-  const spanMin=(G.b-G.a)*5;
-  const LADDER=[30,60,180,360,720,1440,2880];
-  let ivl=LADDER[LADDER.length-1];
-  for(const L of LADDER){ if(spanMin/L<=6){ ivl=L; break; } }
-  const timeOf=idx=>NOW-((N-1)-idx)*300000;
-  const Ta=timeOf(G.a), Tb=timeOf(G.b);
-  const da=new Date(Ta);
-  const mid=new Date(da.getFullYear(),da.getMonth(),da.getDate()).getTime();
-  let tick=mid+Math.ceil((Ta-mid)/60000/ivl)*ivl*60000;
-  let xt='';
-  for(; tick<=Tb; tick+=ivl*60000){
-    const x=X((N-1)-(NOW-tick)/300000);
-    if(x<P.l+16||x>W-P.r-16) continue;
-    const td=new Date(tick);
-    const txt=ivl>=1440 ? `${td.getMonth()+1}/${td.getDate()}` : fmtHM(td);
-    xt+=`<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${P.t}" y2="${H-P.b}"
-      stroke="var(--hair)" stroke-width="1"/>
-      <text x="${x.toFixed(1)}" y="${H-6}" text-anchor="middle" font-size="9.5"
-      fill="var(--muted)" font-family="inherit">${txt}</text>`;
-  }
-
-  /* 전극 교체 마커 */
-  let evm='';
-  for(const ev of EVENTS){
-    if(ev.i<G.a||ev.i>G.b) continue;
-    const x=X(ev.i);
-    evm+=`<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${P.t+11}" y2="${H-P.b}"
-      stroke="var(--warn)" stroke-width="1.6" stroke-dasharray="5 3"/>
-      <rect x="${(x-26).toFixed(1)}" y="${P.t-2}" width="52" height="13" rx="6.5" fill="var(--warn-soft)"/>
-      <text x="${x.toFixed(1)}" y="${P.t+8}" text-anchor="middle" font-size="8.5"
-      font-weight="700" fill="var(--warn)" font-family="inherit">전극 교체</text>`;
-  }
-
-  let dots='';
-  const showDots=(i1-i0+1)<=64;
-  if(showDots){
-    for(let i=i0;i<=i1;i++){
-      dots+=`<circle cx="${X(i).toFixed(1)}" cy="${Y(data[i].v).toFixed(1)}" r="3"
-        fill="var(--accent)" stroke="var(--surface2)" stroke-width="1.5"/>`;
+  const out=[]; let dir=0, extI=0;
+  for(let k=1;k<n;k++){
+    if(dir===0){ if(Math.abs(sm[k]-sm[extI])>=minProm){ dir=sm[k]>sm[extI]?1:-1; extI=k; } continue; }
+    if(dir>0){
+      if(sm[k]>=sm[extI]) extI=k;
+      else if(sm[extI]-sm[k]>=minProm){ out.push({i:i0+extI, v:sm[extI], peak:true}); dir=-1; extI=k; }
+    } else {
+      if(sm[k]<=sm[extI]) extI=k;
+      else if(sm[k]-sm[extI]>=minProm){ out.push({i:i0+extI, v:sm[extI], peak:false}); dir=1; extI=k; }
     }
   }
-  let selDot='';
-  if(G.sel>=i0&&G.sel<=i1){
-    selDot=`<circle cx="${X(G.sel).toFixed(1)}" cy="${Y(data[G.sel].v).toFixed(1)}" r="5.5"
-      fill="var(--accent)" stroke="var(--surface)" stroke-width="2.5"/>
-      <line x1="${X(G.sel).toFixed(1)}" x2="${X(G.sel).toFixed(1)}" y1="${P.t}" y2="${H-P.b}"
-      stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 3"/>`;
-  }
-  G.el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="전류 추이 (끌기·핀치·탭 가능)">
-    <rect x="${P.l}" y="${Y(BAND_HI)}" width="${W-P.l-P.r}" height="${Y(BAND_LO)-Y(BAND_HI)}"
-      fill="var(--band)" rx="3"/>
-    ${grid}${lbl}${xt}${evm}
-    <path d="${line}" fill="none" stroke="var(--accent)" stroke-width="2"
-      stroke-linejoin="round" stroke-linecap="round"/>
-    ${dots}${selDot}
-  </svg><div class="tip" role="status"></div>`;
-
-  const tip=G.el.querySelector('.tip');
-  if(G.sel>=i0&&G.sel<=i1){
-    const p=data[G.sel];
-    tip.textContent=`${fmtMDHM(ptDate(p))} · ${p.v.toFixed(1)} nA · G${p.g}`;
-    tip.style.left=(X(G.sel)/W*100)+'%';
-    tip.style.top=(Y(p.v)/H*100)+'%';
-    tip.style.opacity=1;
-  }
-
-  const spanH=(G.b-G.a)*5/60;
-  gspan.textContent = spanH>=48?`${(spanH/24).toFixed(1)}일 표시`:
-                      spanH>=1?`${spanH.toFixed(1)}시간 표시`:`${Math.round(spanH*60)}분 표시`;
-  const inb=vs.filter(v=>v>=BAND_LO&&v<=BAND_HI).length;
-  stAvg.firstChild.textContent=Math.round(vs.reduce((a,b)=>a+b)/vs.length);
-  stMin.firstChild.textContent=Math.round(Math.min(...vs));
-  stMax.firstChild.textContent=Math.round(Math.max(...vs));
-  stIn.firstChild.textContent=Math.round(100*inb/vs.length);
+  return out;
 }
 
-/* ---- 제스처 (영속 컨테이너에 1회 바인딩) ---- */
-(function(){
-  const box=G.el;
-  const ptrs=new Map();
-  let start=null;
-  function pxToIdx(clientX,a,b){
-    const r=box.getBoundingClientRect();
-    const sx=(clientX-r.left)/r.width*G.W;
-    return a+(sx-G.P.l)/((G.W-G.P.l-G.P.r)/(b-a));
+/* ============ 공용 줌 차트 팩토리 ============ */
+function zoomChart(cfg){
+  const S={ el:cfg.el, W:352, H:cfg.h||196, P:{l:34,r:12,t:12,b:20},
+            MIN_SPAN:12, sel:-1, turns:[] };
+  [S.a,S.b]=cfg.def();
+
+  function clamp(){
+    const [lo,hi]=cfg.lim();
+    const span=S.b-S.a;
+    if(span<S.MIN_SPAN){ const c=(S.a+S.b)/2; S.a=c-S.MIN_SPAN/2; S.b=c+S.MIN_SPAN/2; }
+    if(S.b-S.a>hi-lo){ S.a=lo; S.b=hi; }
+    if(S.a<lo){ S.b+=lo-S.a; S.a=lo; }
+    if(S.b>hi){ S.a-=S.b-hi; S.b=hi; if(S.a<lo)S.a=lo; }
   }
-  box.addEventListener('pointerdown',e=>{
-    box.setPointerCapture(e.pointerId);
-    ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    if(ptrs.size===1){ start={x:e.clientX,a:G.a,b:G.b,moved:false,t:Date.now()}; }
-    else if(ptrs.size===2){
-      const [p1,p2]=[...ptrs.values()];
-      start={dist:Math.max(20,Math.abs(p1.x-p2.x)),a:G.a,b:G.b,cx:(p1.x+p2.x)/2,moved:true};
+
+  function render(){
+    clamp();
+    const {W,H,P}=S;
+    const i0=Math.max(0,Math.floor(S.a)), i1=Math.min(N-1,Math.ceil(S.b));
+    const pts=data.slice(i0,i1+1);
+    const vs=pts.map(p=>p.v);
+    const lo=Math.min(BAND_LO-15,Math.min(...vs)-8), hi=Math.max(BAND_HI+15,Math.max(...vs)+8);
+    const X=idx=>P.l+(W-P.l-P.r)*(idx-S.a)/(S.b-S.a);
+    const Y=v=>P.t+(H-P.t-P.b)*(1-(v-lo)/(hi-lo));
+    S.X=X; S.Y=Y; S.i0=i0; S.i1=i1;
+
+    let grid='',lbl='';
+    const step=(hi-lo)>220?100:50;
+    for(let gv=Math.ceil(lo/step)*step; gv<hi; gv+=step){
+      grid+=`<line x1="${P.l}" x2="${W-P.r}" y1="${Y(gv)}" y2="${Y(gv)}" stroke="var(--hair)" stroke-width="1"/>`;
+      lbl+=`<text x="${P.l-6}" y="${Y(gv)+3.5}" text-anchor="end" font-size="9.5" fill="var(--muted)" font-family="inherit">${gv}</text>`;
     }
-    box.classList.add('dragging');
-  });
-  box.addEventListener('pointermove',e=>{
-    if(!ptrs.has(e.pointerId))return;
-    ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    if(!start)return;
-    const r=box.getBoundingClientRect();
-    const idxPerPx=(start.b-start.a)/(r.width*(G.W-G.P.l-G.P.r)/G.W);
-    if(ptrs.size===1){
-      const dx=e.clientX-start.x;
-      if(Math.abs(dx)>5)start.moved=true;
-      if(start.moved){ G.a=start.a-dx*idxPerPx; G.b=start.b-dx*idxPerPx; gRender(); }
-    } else if(ptrs.size===2){
-      const [p1,p2]=[...ptrs.values()];
-      const nd=Math.max(20,Math.abs(p1.x-p2.x));
-      const scale=start.dist/nd;
-      const cIdx=pxToIdx(start.cx,start.a,start.b);
-      G.a=cIdx-(cIdx-start.a)*scale;
-      G.b=cIdx+(start.b-cIdx)*scale;
-      gRender();
+
+    /* x축: 확대 정도 따라 30분/1h/3h/6h/12h/1d/2d 정시 눈금 */
+    const spanMin=(S.b-S.a)*5;
+    const LADDER=[30,60,180,360,720,1440,2880];
+    let ivl=LADDER[LADDER.length-1];
+    for(const L of LADDER){ if(spanMin/L<=6){ ivl=L; break; } }
+    const timeOf=idx=>NOW-((N-1)-idx)*300000;
+    const Ta=timeOf(S.a), Tb=timeOf(S.b);
+    const da=new Date(Ta);
+    const mid=new Date(da.getFullYear(),da.getMonth(),da.getDate()).getTime();
+    let tick=mid+Math.ceil((Ta-mid)/60000/ivl)*ivl*60000;
+    let xt='';
+    for(; tick<=Tb; tick+=ivl*60000){
+      const x=X((N-1)-(NOW-tick)/300000);
+      if(x<P.l+16||x>W-P.r-16) continue;
+      const td=new Date(tick);
+      const txt=ivl>=1440 ? `${td.getMonth()+1}/${td.getDate()}` : fmtHM(td);
+      xt+=`<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${P.t}" y2="${H-P.b}"
+        stroke="var(--hair)" stroke-width="1"/>
+        <text x="${x.toFixed(1)}" y="${H-6}" text-anchor="middle" font-size="9.5"
+        fill="var(--muted)" font-family="inherit">${txt}</text>`;
     }
-  });
-  function up(e){
-    if(start&&ptrs.size===1&&!start.moved&&(Date.now()-start.t)<500){
-      const r=box.getBoundingClientRect();
-      const sx=(e.clientX-r.left)/r.width*G.W, sy=(e.clientY-r.top)/r.height*G.H;
-      let best=-1,bd=22;
-      for(let i=G.i0;i<=G.i1;i++){
-        const d=Math.hypot(G.X(i)-sx,G.Y(data[i].v)-sy);
-        if(d<bd){bd=d;best=i;}
+
+    /* 전극 교체 마커 */
+    let evm='';
+    for(const ev of EVENTS){
+      if(ev.i<S.a||ev.i>S.b) continue;
+      const x=X(ev.i);
+      evm+=`<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${P.t+11}" y2="${H-P.b}"
+        stroke="var(--warn)" stroke-width="1.6" stroke-dasharray="5 3"/>
+        <rect x="${(x-26).toFixed(1)}" y="${P.t-2}" width="52" height="13" rx="6.5" fill="var(--warn-soft)"/>
+        <text x="${x.toFixed(1)}" y="${P.t+8}" text-anchor="middle" font-size="8.5"
+        font-weight="700" fill="var(--warn)" font-family="inherit">전극 교체</text>`;
+    }
+
+    let line='';
+    for(let i=i0;i<=i1;i++){ line+=`${i===i0?'M':'L'}${X(i).toFixed(1)} ${Y(data[i].v).toFixed(1)} `; }
+
+    let dots='';
+    if((i1-i0+1)<=64){
+      for(let i=i0;i<=i1;i++){
+        dots+=`<circle cx="${X(i).toFixed(1)}" cy="${Y(data[i].v).toFixed(1)}" r="3"
+          fill="var(--accent)" stroke="var(--surface2)" stroke-width="1.5"/>`;
       }
-      G.sel=(best===G.sel)?-1:best;
-      gRender();
     }
-    ptrs.delete(e.pointerId);
-    if(ptrs.size===0){ start=null; box.classList.remove('dragging'); }
-    else if(ptrs.size===1){
-      const p=[...ptrs.values()][0];
-      start={x:p.x,a:G.a,b:G.b,moved:true,t:Date.now()};
+
+    /* 변곡점 ◆ + 수치 (겹침 방지: 화면폭 36px 당 1개 상한) */
+    let tn='';
+    if(S.turns.length){
+      const vis=S.turns.filter(t=>t.i>=S.a&&t.i<=S.b);
+      const maxN=Math.floor((W-P.l-P.r)/36);
+      const show=vis.length<=maxN?vis:
+        vis.map((t,k)=>({t,k})).filter(o=>o.k%Math.ceil(vis.length/maxN)===0).map(o=>o.t);
+      for(const t of show){
+        const x=X(t.i), y=Y(t.v);
+        tn+=`<rect x="${(x-3.4).toFixed(1)}" y="${(y-3.4).toFixed(1)}" width="6.8" height="6.8"
+          transform="rotate(45 ${x.toFixed(1)} ${y.toFixed(1)})" fill="var(--ink2)"
+          stroke="var(--surface2)" stroke-width="1.2"/>
+          <text x="${x.toFixed(1)}" y="${(t.peak?y-9:y+16).toFixed(1)}" text-anchor="middle"
+          font-size="9.5" font-weight="800" fill="var(--ink2)"
+          font-family="inherit">${Math.round(t.v)}</text>`;
+      }
     }
+
+    let selDot='';
+    if(S.sel>=i0&&S.sel<=i1){
+      selDot=`<circle cx="${X(S.sel).toFixed(1)}" cy="${Y(data[S.sel].v).toFixed(1)}" r="5.5"
+        fill="var(--accent)" stroke="var(--surface)" stroke-width="2.5"/>
+        <line x1="${X(S.sel).toFixed(1)}" x2="${X(S.sel).toFixed(1)}" y1="${P.t}" y2="${H-P.b}"
+        stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 3"/>`;
+    }
+
+    S.el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="전류 그래프 (끌기·핀치·탭 가능)">
+      <rect x="${P.l}" y="${Y(BAND_HI)}" width="${W-P.l-P.r}" height="${Y(BAND_LO)-Y(BAND_HI)}"
+        fill="var(--band)" rx="3"/>
+      ${grid}${lbl}${xt}${evm}
+      <path d="${line}" fill="none" stroke="var(--accent)" stroke-width="2"
+        stroke-linejoin="round" stroke-linecap="round"/>
+      ${dots}${tn}${selDot}
+    </svg><div class="tip" role="status"></div>`;
+
+    const tip=S.el.querySelector('.tip');
+    if(S.sel>=i0&&S.sel<=i1){
+      const p=data[S.sel];
+      tip.textContent=`${fmtMDHM(ptDate(p))} · ${p.v.toFixed(1)} nA · G${p.g}`;
+      tip.style.left=(X(S.sel)/W*100)+'%';
+      tip.style.top=(Y(p.v)/H*100)+'%';
+      tip.style.opacity=1;
+    }
+    if(cfg.onRender) cfg.onRender(S, vs);
   }
-  box.addEventListener('pointerup',up);
-  box.addEventListener('pointercancel',up);
-  box.addEventListener('wheel',e=>{
-    e.preventDefault();
-    const cIdx=pxToIdx(e.clientX,G.a,G.b);
-    const scale=e.deltaY>0?1.18:0.85;
-    G.a=cIdx-(cIdx-G.a)*scale; G.b=cIdx+(G.b-cIdx)*scale;
-    gRender();
-  },{passive:false});
-})();
-document.getElementById('greset').addEventListener('click',()=>{
-  [G.a,G.b]=G.DEF; G.sel=-1; gRender();
+
+  /* 제스처 (영속 컨테이너에 1회 바인딩) */
+  (function(){
+    const box=S.el;
+    const ptrs=new Map();
+    let start=null;
+    function pxToIdx(clientX,a,b){
+      const r=box.getBoundingClientRect();
+      const sx=(clientX-r.left)/r.width*S.W;
+      return a+(sx-S.P.l)/((S.W-S.P.l-S.P.r)/(b-a));
+    }
+    box.addEventListener('pointerdown',e=>{
+      box.setPointerCapture(e.pointerId);
+      ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+      if(ptrs.size===1){ start={x:e.clientX,a:S.a,b:S.b,moved:false,t:Date.now()}; }
+      else if(ptrs.size===2){
+        const [p1,p2]=[...ptrs.values()];
+        start={dist:Math.max(20,Math.abs(p1.x-p2.x)),a:S.a,b:S.b,cx:(p1.x+p2.x)/2,moved:true};
+      }
+      box.classList.add('dragging');
+    });
+    box.addEventListener('pointermove',e=>{
+      if(!ptrs.has(e.pointerId))return;
+      ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+      if(!start)return;
+      const r=box.getBoundingClientRect();
+      const idxPerPx=(start.b-start.a)/(r.width*(S.W-S.P.l-S.P.r)/S.W);
+      if(ptrs.size===1){
+        const dx=e.clientX-start.x;
+        if(Math.abs(dx)>5)start.moved=true;
+        if(start.moved){ S.a=start.a-dx*idxPerPx; S.b=start.b-dx*idxPerPx; render(); }
+      } else if(ptrs.size===2){
+        const [p1,p2]=[...ptrs.values()];
+        const nd=Math.max(20,Math.abs(p1.x-p2.x));
+        const scale=start.dist/nd;
+        const cIdx=pxToIdx(start.cx,start.a,start.b);
+        S.a=cIdx-(cIdx-start.a)*scale;
+        S.b=cIdx+(start.b-cIdx)*scale;
+        render();
+      }
+    });
+    function up(e){
+      if(start&&ptrs.size===1&&!start.moved&&(Date.now()-start.t)<500){
+        const r=box.getBoundingClientRect();
+        const sx=(e.clientX-r.left)/r.width*S.W, sy=(e.clientY-r.top)/r.height*S.H;
+        let best=-1,bd=22;
+        for(let i=S.i0;i<=S.i1;i++){
+          const d=Math.hypot(S.X(i)-sx,S.Y(data[i].v)-sy);
+          if(d<bd){bd=d;best=i;}
+        }
+        S.sel=(best===S.sel)?-1:best;
+        render();
+      }
+      ptrs.delete(e.pointerId);
+      if(ptrs.size===0){ start=null; box.classList.remove('dragging'); }
+      else if(ptrs.size===1){
+        const p=[...ptrs.values()][0];
+        start={x:p.x,a:S.a,b:S.b,moved:true,t:Date.now()};
+      }
+    }
+    box.addEventListener('pointerup',up);
+    box.addEventListener('pointercancel',up);
+    box.addEventListener('wheel',e=>{
+      e.preventDefault();
+      const cIdx=pxToIdx(e.clientX,S.a,S.b);
+      const scale=e.deltaY>0?1.18:0.85;
+      S.a=cIdx-(cIdx-S.a)*scale; S.b=cIdx+(S.b-cIdx)*scale;
+      render();
+    },{passive:false});
+  })();
+
+  S.render=render;
+  S.reset=()=>{ [S.a,S.b]=cfg.def(); S.sel=-1; render(); };
+  render();
+  return S;
+}
+
+/* ============ 홈 메인 그래프 ============ */
+const spanText=S=>{
+  const h=(S.b-S.a)*5/60;
+  return h>=48?`${(h/24).toFixed(1)}일 표시`:h>=1?`${h.toFixed(1)}시간 표시`:`${Math.round(h*60)}분 표시`;
+};
+const mainChart=zoomChart({
+  el:document.getElementById('bigchart'), h:196,
+  lim:()=>[0,N-1], def:()=>[N-145,N-1],
+  onRender(S,vs){
+    gspan.textContent=spanText(S);
+    const inb=vs.filter(v=>v>=BAND_LO&&v<=BAND_HI).length;
+    stAvg.firstChild.textContent=Math.round(vs.reduce((a,b)=>a+b)/vs.length);
+    stMin.firstChild.textContent=Math.round(Math.min(...vs));
+    stMax.firstChild.textContent=Math.round(Math.max(...vs));
+    stIn.firstChild.textContent=Math.round(100*inb/vs.length);
+  }
 });
-gRender();
+document.getElementById('greset').addEventListener('click',()=>mainChart.reset());
 
 /* ============ 기록: 서버 일자별 조회 (데모 = 로컬 7일) ============ */
-const DAYS=(()=>{                      /* 데이터에 존재하는 로컬 날짜들 (과거→최근) */
+const DAYS=(()=>{
   const map=new Map();
   data.forEach((p,i)=>{
     const d=ptDate(p);
@@ -691,66 +752,34 @@ const DAYS=(()=>{                      /* 데이터에 존재하는 로컬 날�
   });
   return [...map.values()];
 })();
-let dayIdx=DAYS.length-2;              /* 데모: 어제부터 */
+let dayIdx=DAYS.length-2;
 const WD=['일','월','화','수','목','금','토'];
+
+const dayChart=zoomChart({
+  el:document.getElementById('daychart'), h:170,
+  lim:()=>[DAYS[dayIdx].i0, DAYS[dayIdx].i1],
+  def:()=>[DAYS[dayIdx].i0, DAYS[dayIdx].i1],
+  onRender(S,vs){
+    dSpan.textContent=(S.b-S.a>=DAYS[dayIdx].i1-DAYS[dayIdx].i0-1)?'하루 전체':spanText(S);
+    const inb=vs.filter(v=>v>=BAND_LO&&v<=BAND_HI).length;
+    dAvg.innerHTML=`${Math.round(vs.reduce((a,b)=>a+b)/vs.length)}<small> nA</small>`;
+    dMin.innerHTML=`${Math.round(Math.min(...vs))}<small> nA</small>`;
+    dMax.innerHTML=`${Math.round(Math.max(...vs))}<small> nA</small>`;
+    dIn.innerHTML=`${Math.round(100*inb/vs.length)}<small> %</small>`;
+  }
+});
+document.getElementById('dReset').addEventListener('click',()=>dayChart.reset());
 
 function renderDay(){
   const day=DAYS[dayIdx];
-  const pts=data.slice(day.i0,day.i1+1);
   dLabel.textContent=`${day.d.getFullYear()}년 ${day.d.getMonth()+1}월 ${day.d.getDate()}일 (${WD[day.d.getDay()]})`;
-  dSub.textContent=`서버에서 불러옴 · ${pts.length}개 측정`;
+  dSub.textContent=`서버에서 불러옴 · ${day.i1-day.i0+1}개 측정`;
   dPrev.disabled=(dayIdx===0);
   dNext.disabled=(dayIdx===DAYS.length-1);
+  dayChart.turns=findTurns(day.i0, day.i1, 5);   /* 변곡점 (프로미넌스 5 nA) */
+  dayChart.reset();
 
-  /* 00–24시 고정축 하루 그래프 */
-  const W=352,H=170,P={l:34,r:12,t:10,b:20};
-  const vs=pts.map(p=>p.v);
-  const lo=Math.min(BAND_LO-15,Math.min(...vs)-8), hi=Math.max(BAND_HI+15,Math.max(...vs)+8);
   const dayT0=day.d.getTime();
-  const Xt=t=>P.l+(W-P.l-P.r)*Math.min(1,Math.max(0,(t-dayT0)/86400000));
-  const Y=v=>P.t+(H-P.t-P.b)*(1-(v-lo)/(hi-lo));
-  let grid='',lbl='';
-  const step=(hi-lo)>220?100:50;
-  for(let gv=Math.ceil(lo/step)*step; gv<hi; gv+=step){
-    grid+=`<line x1="${P.l}" x2="${W-P.r}" y1="${Y(gv)}" y2="${Y(gv)}" stroke="var(--hair)" stroke-width="1"/>`;
-    lbl+=`<text x="${P.l-6}" y="${Y(gv)+3.5}" text-anchor="end" font-size="9.5" fill="var(--muted)" font-family="inherit">${gv}</text>`;
-  }
-  let xt='';
-  for(let h=0;h<=24;h+=6){
-    const x=P.l+(W-P.l-P.r)*h/24;
-    xt+=`<line x1="${x}" x2="${x}" y1="${P.t}" y2="${H-P.b}" stroke="var(--hair)" stroke-width="1"/>
-      <text x="${x}" y="${H-6}" text-anchor="middle" font-size="9.5" fill="var(--muted)"
-      font-family="inherit">${String(h).padStart(2,'0')}시</text>`;
-  }
-  let line='';
-  pts.forEach((p,k)=>{ line+=`${k?'L':'M'}${Xt(ptDate(p).getTime()).toFixed(1)} ${Y(p.v).toFixed(1)} `; });
-  let evm='';
-  for(const ev of EVENTS){
-    const t=ptDate(data[ev.i]).getTime();
-    if(t<dayT0||t>=dayT0+86400000) continue;
-    const x=Xt(t);
-    evm+=`<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${P.t+11}" y2="${H-P.b}"
-      stroke="var(--warn)" stroke-width="1.6" stroke-dasharray="5 3"/>
-      <rect x="${(x-26).toFixed(1)}" y="${P.t-2}" width="52" height="13" rx="6.5" fill="var(--warn-soft)"/>
-      <text x="${x.toFixed(1)}" y="${P.t+8}" text-anchor="middle" font-size="8.5"
-      font-weight="700" fill="var(--warn)" font-family="inherit">전극 교체</text>`;
-  }
-  document.getElementById('daychart').innerHTML=
-    `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="하루치 전류 그래프">
-    <rect x="${P.l}" y="${Y(BAND_HI)}" width="${W-P.l-P.r}" height="${Y(BAND_LO)-Y(BAND_HI)}"
-      fill="var(--band)" rx="3"/>
-    ${grid}${lbl}${xt}${evm}
-    <path d="${line}" fill="none" stroke="var(--accent)" stroke-width="1.8"
-      stroke-linejoin="round" stroke-linecap="round"/>
-  </svg>`;
-
-  const inb=vs.filter(v=>v>=BAND_LO&&v<=BAND_HI).length;
-  dAvg.innerHTML=`${Math.round(vs.reduce((a,b)=>a+b)/vs.length)}<small> nA</small>`;
-  dMin.innerHTML=`${Math.round(Math.min(...vs))}<small> nA</small>`;
-  dMax.innerHTML=`${Math.round(Math.max(...vs))}<small> nA</small>`;
-  dIn.innerHTML=`${Math.round(100*inb/vs.length)}<small> %</small>`;
-
-  /* 그날 이벤트 */
   let ev='';
   for(const e of EVENTS){
     const t=ptDate(data[e.i]);
