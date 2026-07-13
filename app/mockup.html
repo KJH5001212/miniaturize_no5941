@@ -163,7 +163,8 @@ body {
 .clock { flex:1; background:var(--surface2); border-radius:14px; padding:10px 6px 8px;
   text-align:center; }
 .clock svg { display:block; margin:0 auto; }
-.clock .half { font-size:11px; font-weight:800; color:var(--ink2); margin-top:2px; }
+.clock .half { font-size:11px; font-weight:700; color:var(--muted); margin-top:3px; }
+.clock .pctlab { color:var(--ink); font-weight:800; }
 .clock .ctr .pct { font-size:15px; font-weight:800; font-variant-numeric:tabular-nums; }
 .clock .ctr .cl { font-size:8px; fill:var(--muted); font-weight:700; }
 
@@ -343,8 +344,10 @@ body {
       </div>
 
       <div class="clocks">
-        <div class="clock"><div id="clockAM"></div><div class="half">오전 (0–12시)</div></div>
-        <div class="clock"><div id="clockPM"></div><div class="half">오후 (12–24시)</div></div>
+        <div class="clock"><div id="clockAM"></div>
+          <div class="half">오전 · <span id="amPct" class="pctlab"></span></div></div>
+        <div class="clock"><div id="clockPM"></div>
+          <div class="half">오후 · <span id="pmPct" class="pctlab"></span></div></div>
       </div>
     </section>
 
@@ -490,7 +493,7 @@ body {
 
 <!-- ==================== 설계 노트 ==================== -->
 <div class="notes">
-  <h1>Ampero — 웨어러블 포텐쇼스탯 전용 앱 <span style="color:var(--accent)">목업 v1.0</span></h1>
+  <h1>Ampero — 웨어러블 포텐쇼스탯 전용 앱 <span style="color:var(--accent)">목업 v1.1</span></h1>
   <p class="sub">CGM 문법으로 직관성을 끌어올린 라운드. 값·그래프를 구간 색으로 말하고,
   추세 화살표·오전/오후 TIR 시계·주간 패턴·튀는 값 삭제까지. 표기는 전류(nA).</p>
   <div class="legend">
@@ -505,8 +508,9 @@ body {
       <li><b>구간 색상</b>: 안전=초록·저전류=빨강·고전류=주황. 그래프 배경 3존 음영 +
         곡선 구간별 색 + 현재값·화살표 색</li>
       <li><b>추세 화살표</b>: 위/평형/아래 3단계 (최근 30분 기울기), 숫자 옆</li>
-      <li><b>오전·오후 시계</b> 2개: <b>연속 도넛</b>(구간색이 이어짐), 미래 시간대는 흰 실선,
-        가운데 정상 비율 %. <b>빨강·주황 구간을 탭하면</b> 홈 그래프가 그 시간대로 점프</li>
+      <li><b>오전·오후 시계</b> 2개: <b>꽉 찬 파이</b>(구간색), 미래 시간대는 빈 파이(테두리만).
+        빨강·주황 특이점엔 <b>탭 마커(!)</b> → 누르면 홈 그래프가 그 시간대로 점프.
+        정상 비율 %는 파이 아래 라벨로 이동</li>
       <li>홈 위젯: 플랫폼 API 필요 — <b>메모만</b> (아래 백로그)</li>
       <li><b>기록 일간</b>: 날짜를 탭하면 <b>월·일 스크롤 휠</b>로 이동. <b>주간 패턴</b> 탭
         = 7일 겹쳐 중앙값+10–90% 밴드(AGP)로 반복 패턴 확인</li>
@@ -764,69 +768,87 @@ const spanText=S=>{ const h=(S.b-S.a)*5/60;
  * 기준일(7/12)을 쓰고 현재시각을 20:00 으로 고정 → 20시 이후는 미래(흰선). */
 const CLOCK_NOW_H=20;
 function drawClock(el, half){
-  const cx=44,cy=44,r=34, R2=Math.PI*2;
+  const cx=44,cy=44,R=38, R2=Math.PI*2;
   const day=DAYS[DAYS.length-2];             // 기준일
   const dayBase=day.d.getTime();
   const SL=144;                              // 12시간 × 12슬롯(5분)
   const zonesArr=new Array(SL).fill(null);   // 'safe'|'low'|'high'|null(미래)
   for(let i=day.i0;i<=day.i1;i++){ if(!alive(i))continue; const d=ptDate(data[i]);
     const hr=d.getHours()+d.getMinutes()/60;
-    if(hr>=CLOCK_NOW_H) continue;            // 미래(흰선)로 남김
+    if(hr>=CLOCK_NOW_H) continue;            // 미래(빈 파이)로 남김
     const off=(d.getTime()-dayBase)-half*3600000;
     if(off<0||off>=12*3600000) continue;
     zonesArr[Math.floor(off/300000)]=zoneOf(data[i].v);
   }
   const base=dayBase;
-  /* 안전 비율 */
-  let safe=0,tot=0; zonesArr.forEach(z=>{ if(z){tot++; if(z==='safe')safe++;} });
-  const pct=tot?Math.round(100*safe/tot):0;
 
-  const A=k=>-Math.PI/2 + (k/SL)*R2;          // 슬롯 k 의 시작각 (12시 위, 시계방향)
-  const pt=(ang)=>[cx+r*Math.cos(ang), cy+r*Math.sin(ang)];
-  function seg(k0,k1,stroke,dashed,clickHour){
-    const a0=A(k0), a1=A(k1); const [x0,y0]=pt(a0),[x1,y1]=pt(a1);
+  const A=k=>-Math.PI/2 + (k/SL)*R2;          // 12시 위, 시계방향
+  function slice(k0,k1,fill){
+    const a0=A(k0), a1=A(k1);
+    const x0=cx+R*Math.cos(a0), y0=cy+R*Math.sin(a0);
+    const x1=cx+R*Math.cos(a1), y1=cy+R*Math.sin(a1);
     const large=(a1-a0)>Math.PI?1:0;
-    const dash=dashed?' stroke-dasharray="1.4 2.4"':'';
-    const cls=clickHour!=null?' class="cseg" style="cursor:pointer"':'';
-    const dh=clickHour!=null?` data-hour="${clickHour}"`:'';
-    return `<path d="M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 ${large} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}"
-      fill="none" stroke="${stroke}" stroke-width="7"${dash}${cls}${dh}/>`;
+    return `<path d="M${cx} ${cy} L${x0.toFixed(2)} ${y0.toFixed(2)}
+      A${R} ${R} 0 ${large} 1 ${x1.toFixed(2)} ${y1.toFixed(2)} Z" fill="${fill}"/>`;
   }
-  /* 연속 구간 병합 (같은 색끼리) */
-  let paths='';
-  let k=0;
+  /* 같은 색 구간 병합 → 파이 슬라이스 (미래는 채우지 않음 = 빈 파이) */
+  let pies='', marks=''; let k=0;
   while(k<SL){
     const z=zonesArr[k]; let j=k+1; while(j<SL && zonesArr[j]===z) j++;
-    if(z===null){
-      paths+=seg(k,j,'var(--surface)',true,null);            // 미래 = 흰 실선(점선)
-    } else {
-      const col=ZCOL[z];
-      const clickH=(z==='safe')?null: half + Math.floor(k/12); // 빨강/주황만 클릭
-      paths+=seg(k,j,col,false,clickH);
+    if(z!==null){
+      pies+=slice(k,j, z==='safe'?'var(--good)':z==='low'?'var(--crit)':'var(--warn)');
+      /* 특이점(빨강·주황) 탭 마커: 구간 중앙에 점 */
+      if(z!=='safe'){
+        const km=(k+j)/2, am=A(km), rm=R*0.66;
+        const mx=cx+rm*Math.cos(am), my=cy+rm*Math.sin(am);
+        const hour=half+Math.floor(km/12);
+        marks+=`<g class="cseg" style="cursor:pointer" data-hour="${hour}">
+          <circle cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="9" fill="transparent"/>
+          <circle cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="5.5" fill="var(--surface)"
+            stroke="${z==='low'?'var(--crit)':'var(--warn)'}" stroke-width="2.4"/>
+          <text x="${mx.toFixed(1)}" y="${(my+2.6).toFixed(1)}" text-anchor="middle"
+            font-size="7.5" font-weight="900" font-family="inherit"
+            fill="${z==='low'?'var(--crit)':'var(--warn)'}">${z==='low'?'!':'!'}</text></g>`;
+      }
     }
     k=j;
   }
-  el.innerHTML=`<svg width="88" height="88" viewBox="0 0 88 88" role="img" aria-label="시간별 구간">
-    <circle cx="44" cy="44" r="34" fill="none" stroke="var(--hair)" stroke-width="7" opacity="0.5"/>
-    ${paths}
-    <text x="44" y="43" text-anchor="middle" class="pct" font-family="inherit"
-      fill="${pct>=70?'var(--good)':pct>=40?'var(--warn)':'var(--crit)'}">${pct}%</text>
-    <text x="44" y="55" text-anchor="middle" class="cl" font-family="inherit">정상</text></svg>`;
-  /* 세그먼트 클릭 → 메인 그래프를 그 시간대(±1.5h)로 이동 + 홈 탭 */
+  /* 12/3/6/9시 눈금 (파이 위 얇은 흰 선) */
+  let ticks='';
+  for(let h=0;h<12;h+=3){ const a=A(h*12);
+    ticks+=`<line x1="${(cx+R*0.72*Math.cos(a)).toFixed(1)}" y1="${(cy+R*0.72*Math.sin(a)).toFixed(1)}"
+      x2="${(cx+R*Math.cos(a)).toFixed(1)}" y2="${(cy+R*Math.sin(a)).toFixed(1)}"
+      stroke="var(--surface2)" stroke-width="1.2" opacity="0.7"/>`; }
+
+  el.innerHTML=`<svg width="92" height="92" viewBox="0 0 92 92" role="img" aria-label="시간별 구간 파이">
+    <circle cx="44" cy="44" r="38" fill="none" stroke="var(--hair)" stroke-width="1.6"/>
+    ${pies}${ticks}${marks}</svg>`;
+
   el.querySelectorAll('.cseg').forEach(p=>{
     p.addEventListener('click',()=>{
       const hour=+p.dataset.hour;
-      const center=base+hour*3600000+1800000;               // 그 시(정각)+30분
+      const center=base+hour*3600000+1800000;
       const cIdx=(N-1)-(NOW-center)/300000;
-      mainChart.a=cIdx-18; mainChart.b=cIdx+18;              // 약 ±1.5시간 창
+      mainChart.a=cIdx-18; mainChart.b=cIdx+18;
       mainChart.selI=-1; mainChart.render();
       document.querySelector('.tabbar button[data-scr="scr-home"]').click();
     });
   });
 }
+function halfSafePct(half){
+  const day=DAYS[DAYS.length-2], dayBase=day.d.getTime();
+  let safe=0,tot=0;
+  for(let i=day.i0;i<=day.i1;i++){ if(!alive(i))continue; const d=ptDate(data[i]);
+    const hr=d.getHours()+d.getMinutes()/60; if(hr>=CLOCK_NOW_H) continue;
+    const off=(d.getTime()-dayBase)-half*3600000; if(off<0||off>=12*3600000) continue;
+    tot++; if(zoneOf(data[i].v)==='safe') safe++; }
+  return tot?Math.round(100*safe/tot):0;
+}
 function renderClocks(){
   drawClock(document.getElementById('clockAM'), 0);
   drawClock(document.getElementById('clockPM'), 12);
+  document.getElementById('amPct').textContent=halfSafePct(0)+'% 정상';
+  document.getElementById('pmPct').textContent=halfSafePct(12)+'% 정상';
 }
 
 /* ============ 홈 그래프 ============ */
